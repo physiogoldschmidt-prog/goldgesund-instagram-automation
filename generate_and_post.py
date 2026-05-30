@@ -66,11 +66,14 @@ Aufbau:
 5. Leerzeile
 6. 10–12 relevante Hashtags (deutsch + englisch gemischt)
 
-Antworte NUR im folgenden JSON-Format, kein Text davor oder danach:
-{{
-  "image_text": "Zeile 1\\nZeile 2\\nZeile 3",
-  "caption": "Die vollständige Caption inkl. Hashtags"
-}}"""
+Antworte GENAU in diesem Format — keine anderen Texte davor oder danach:
+
+===IMAGE_TEXT===
+Zeile 1
+Zeile 2
+Zeile 3
+===CAPTION===
+Die vollständige Caption inkl. Hashtags"""
 
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
@@ -79,13 +82,15 @@ Antworte NUR im folgenden JSON-Format, kein Text davor oder danach:
     )
 
     raw = message.content[0].text.strip()
-    # JSON-Block herausschneiden falls Backticks dabei
-    if "```" in raw:
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    data = json.loads(raw)
-    return data["image_text"], data["caption"]
+
+    # Text zwischen den Trennzeichen herausschneiden
+    if "===IMAGE_TEXT===" not in raw or "===CAPTION===" not in raw:
+        raise ValueError(f"Unerwartetes Antwort-Format:\n{raw}")
+
+    image_text = raw.split("===IMAGE_TEXT===")[1].split("===CAPTION===")[0].strip()
+    caption = raw.split("===CAPTION===")[1].strip()
+
+    return image_text, caption
 
 
 # ── Bild-Erstellung via Pillow ────────────────────────────────────────────────
