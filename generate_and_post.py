@@ -6,6 +6,7 @@ import base64
 import time
 import textwrap
 from datetime import datetime
+from urllib.parse import urlencode
 
 import anthropic
 import requests
@@ -209,7 +210,9 @@ def upload_caption(caption: str, date_str: str) -> None:
 def send_preview_email(image_url: str, caption: str, date_str: str) -> None:
     """Schickt Lisa eine Vorschau-E-Mail. Erst nach Klick auf den Button wird gepostet."""
 
-    approval_url = f"{MAKE_APPROVAL_WEBHOOK}?date={date_str}"
+    # Bild-URL und Caption direkt im Link übergeben → Make.com postet beim Klick sofort
+    params = urlencode({"image_url": image_url, "caption": caption})
+    approval_url = f"{MAKE_APPROVAL_WEBHOOK}?{params}"
 
     # Caption-Zeilenumbrüche für HTML umwandeln
     caption_html = caption.replace("\n", "<br>")
