@@ -218,7 +218,7 @@ def create_image(image_text: str) -> Image.Image:
     img_rgba.paste(orn_top, (0, 45), orn_top)
 
     orn_bot = load_ornament("ornament_bottom.png")
-    img_rgba.paste(orn_bot, (0, 810), orn_bot)
+    img_rgba.paste(orn_bot, (0, 760), orn_bot)
 
     img  = img_rgba.convert("RGB")
     draw = ImageDraw.Draw(img)
