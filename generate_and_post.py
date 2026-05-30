@@ -25,6 +25,9 @@ PREVIEW_EMAIL           = "physiogoldschmidt@gmail.com"
 
 NUM_SLIDES = 4   # Anzahl Karten im Carousel
 
+# Mo=0, Mi=2, Fr=4 → Carousel  |  Di=1, Do=3, Sa=5, So=6 → Einzelbild
+CAROUSEL_DAYS = {0, 2, 4}
+
 # Pexels-Suchbegriffe je Wochentag (passend zum Thema)
 WEEKDAY_PHOTO_SEARCH = {
     0: "misty forest morning light",
@@ -113,17 +116,21 @@ def extract_briefing_highlights(briefing: str) -> str:
 # ── Content-Generierung via Claude ───────────────────────────────────────────
 
 def generate_content() -> tuple[list[str], str]:
-    """Gibt (liste mit 4 Bild-Texten, caption) zurück."""
+    """Gibt (liste mit Bild-Texten, caption) zurück.
+    Carousel-Tage (Mo/Mi/Fr): 4 Karten.
+    Einzelbild-Tage (Di/Do/Sa/So): 1 Karte.
+    """
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-    weekday = datetime.now().weekday()
+    weekday     = datetime.now().weekday()
     week_number = datetime.now().isocalendar()[1]
-    theme = WEEKDAY_THEMES[weekday]
+    theme       = WEEKDAY_THEMES[weekday]
+    is_carousel = weekday in CAROUSEL_DAYS
 
     # Aktuelles Briefing laden
-    briefing_raw = get_latest_briefing()
+    briefing_raw        = get_latest_briefing()
     briefing_highlights = extract_briefing_highlights(briefing_raw)
-    briefing_section = ""
+    briefing_section    = ""
     if briefing_highlights:
         briefing_section = f"""
 Aktuelle Forschungserkenntnisse aus dem wöchentlichen Briefing:
@@ -132,11 +139,14 @@ Aktuelle Forschungserkenntnisse aus dem wöchentlichen Briefing:
 Beziehe diese Erkenntnisse passend in den Content ein — als Inspiration, konkretes Beispiel oder aktuellen Bezug. Zitiere keine Studie namentlich, sondern integriere das Wissen natürlich.
 """
 
-    prompt = f"""Du bist Lisa Goldschmidts Content-Assistentin für ihren Instagram-Account GOLDGESUND.
+    base_intro = f"""Du bist Lisa Goldschmidts Content-Assistentin für ihren Instagram-Account GOLDGESUND.
 Lisa ist Heilpraktikerin (Osteopathie, Psychosomatik) in Berlin. Ihr Ton: warm, ruhig, klar, wissenschaftlich fundiert aber alltagsnah — keine Heilungsversprechen, keine lauten Claims.
 
 Wochentag-Thema: {theme}
-Wochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas.{briefing_section}
+Wochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas.{briefing_section}"""
+
+    if is_carousel:
+        prompt = base_intro + """
 
 Erstelle bitte einen Instagram-CAROUSEL mit 4 Bildkarten + Caption.
 
@@ -152,7 +162,7 @@ Für jede Karte gilt:
 - Kraftvoll und kurz — kein Fülltext
 
 CAPTION (für den ganzen Carousel-Post):
-1. Erste Zeile: starker Hook (passt zu Karte 1) — macht Lust zu lesen
+1. Erste Zeile: starker Hook — macht Lust zu lesen
 2. Kurzer Absatz: Vertiefung aus Lisas Arbeit
 3. Kurzer praktischer Impuls
 4. Sanfter Abschluss (kein harter CTA)
@@ -181,16 +191,46 @@ Zeile 3
 ===CAPTION===
 Die vollständige Caption inkl. Hashtags"""
 
+    else:
+        prompt = base_intro + """
+
+Erstelle bitte ein Instagram-EINZELBILD + Caption.
+
+IMAGE_TEXT:
+Kurzer, kraftvoller Text für die Bildkarte.
+Max. 3 Zeilen, pro Zeile max. 32 Zeichen.
+Kann ein Zitat, eine Frage oder eine kurze Aussage sein.
+Schreib jeden Satz/jede Zeile in eine neue Zeile.
+
+CAPTION:
+1. Erste Zeile: starker Hook — macht Lust weiterzulesen
+2. Kurzer Absatz: Einblick aus Lisas Arbeit
+3. Kurzer praktischer Impuls oder Gedanke
+4. Sanfter Abschluss (kein harter CTA)
+5. Leerzeile
+6. 10–12 relevante Hashtags (deutsch + englisch gemischt)
+Länge: 180–240 Wörter
+
+Antworte GENAU in diesem Format — keine anderen Texte davor oder danach:
+
+===SLIDE_1===
+Zeile 1
+Zeile 2
+Zeile 3
+===CAPTION===
+Die vollständige Caption inkl. Hashtags"""
+
+    n_slides = NUM_SLIDES if is_carousel else 1
+
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1600,
         messages=[{"role": "user", "content": prompt}],
     )
-
     raw = message.content[0].text.strip()
 
     # Validierung
-    for i in range(1, NUM_SLIDES + 1):
+    for i in range(1, n_slides + 1):
         if f"===SLIDE_{i}===" not in raw:
             raise ValueError(f"Unerwartetes Antwort-Format (SLIDE_{i} fehlt):\n{raw}")
     if "===CAPTION===" not in raw:
@@ -198,9 +238,9 @@ Die vollständige Caption inkl. Hashtags"""
 
     # Parsen
     slides = []
-    for i in range(1, NUM_SLIDES + 1):
+    for i in range(1, n_slides + 1):
         marker_start = f"===SLIDE_{i}==="
-        marker_end   = f"===SLIDE_{i+1}===" if i < NUM_SLIDES else "===CAPTION==="
+        marker_end   = f"===SLIDE_{i+1}===" if i < n_slides else "===CAPTION==="
         text = raw.split(marker_start)[1].split(marker_end)[0].strip()
         slides.append(text)
 
@@ -418,11 +458,12 @@ def upload_caption(caption: str, date_str: str) -> None:
 
 # ── Vorschau-E-Mail via Brevo ─────────────────────────────────────────────────
 
-def send_preview_email(image_urls: list[str], caption: str, date_str: str) -> None:
-    """Schickt Lisa eine Vorschau-E-Mail mit allen Carousel-Karten."""
+def send_preview_email(image_urls: list[str], caption: str,
+                       date_str: str, post_type: str = "carousel") -> None:
+    """Schickt Lisa eine Vorschau-E-Mail mit allen Karten."""
 
-    # Alle Bild-URLs + Caption im Webhook-Link übergeben
-    params = {"caption": caption}
+    # Alle Bild-URLs + Caption + post_type im Webhook-Link übergeben
+    params = {"post_type": post_type, "caption": caption}
     for i, url in enumerate(image_urls, start=1):
         params[f"image_url_{i}"] = url
     approval_url = f"{MAKE_APPROVAL_WEBHOOK}?{urlencode(params)}"
@@ -467,11 +508,11 @@ def send_preview_email(image_urls: list[str], caption: str, date_str: str) -> No
           <td style="background:#FAFAF7;padding:32px 40px 16px;text-align:center;
                      border-bottom:2px solid #C8963E;">
             <p style="margin:0;font-size:13px;color:#888;letter-spacing:2px;
-                      text-transform:uppercase;">Dein heutiger Instagram-Carousel</p>
+                      text-transform:uppercase;">{"Carousel · 4 Karten" if post_type == "carousel" else "Einzelbild"}</p>
             <h1 style="margin:8px 0 0;font-size:36px;color:#C8963E;font-weight:normal;
                        font-family:'Palatino Linotype',Palatino,serif;
                        font-style:italic;">goldgesund</h1>
-            <p style="margin:4px 0 0;font-size:13px;color:#999;">{date_str} &nbsp;·&nbsp; {len(image_urls)} Karten</p>
+            <p style="margin:4px 0 0;font-size:13px;color:#999;">{date_str} &nbsp;·&nbsp; {len(image_urls)} {"Karten" if len(image_urls) > 1 else "Karte"}</p>
           </td>
         </tr>
 
@@ -507,7 +548,7 @@ def send_preview_email(image_urls: list[str], caption: str, date_str: str) -> No
                       text-decoration:none;font-size:17px;font-weight:bold;
                       padding:16px 48px;border-radius:4px;
                       letter-spacing:0.5px;">
-              ✅ &nbsp; Jetzt als Carousel auf Instagram veröffentlichen
+              ✅ &nbsp; {"Jetzt als Carousel auf Instagram veröffentlichen" if post_type == "carousel" else "Jetzt auf Instagram veröffentlichen"}
             </a>
             <p style="margin:16px 0 0;font-size:13px;color:#aaa;">
               Wenn du nichts tust, wird heute kein Post veröffentlicht.
@@ -534,7 +575,7 @@ def send_preview_email(image_urls: list[str], caption: str, date_str: str) -> No
     payload = {
         "sender": {"name": "GOLDGESUND", "email": "physiogoldschmidt@gmail.com"},
         "to": [{"email": PREVIEW_EMAIL, "name": "Lisa"}],
-        "subject": f"✨ Instagram-Carousel {date_str} — bitte freigeben",
+        "subject": f"✨ Instagram-{'Carousel' if post_type == 'carousel' else 'Post'} {date_str} — bitte freigeben",
         "htmlContent": html,
     }
 
@@ -557,15 +598,18 @@ def main():
     date_str    = datetime.now().strftime("%Y-%m-%d")
     weekday     = datetime.now().weekday()
     week_number = datetime.now().isocalendar()[1]
-    print(f"GOLDGESUND Instagram Carousel — {date_str}")
+    is_carousel = weekday in CAROUSEL_DAYS
+    post_type   = "carousel" if is_carousel else "single"
+    day_names   = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+    print(f"GOLDGESUND Instagram — {date_str} ({day_names[weekday]}, {post_type.upper()})")
 
-    print("1/4  Content wird generiert (inkl. Briefing-Recherche) …")
+    print(f"1/4  Content wird generiert ({post_type}, inkl. Briefing-Recherche) …")
     slides_text, caption = generate_content()
     for i, t in enumerate(slides_text, 1):
         print(f"     Karte {i}: {t!r}")
     print(f"     Caption-Vorschau: {caption[:80]}…")
 
-    print("2/4  Naturfoto laden + alle Karten erstellen …")
+    print("2/4  Naturfoto laden + Karten erstellen …")
     try:
         bg_photo = download_nature_photo(weekday, week_number)
         print(f"     Foto geladen ✓")
@@ -574,11 +618,12 @@ def main():
         bg_color = WEEKDAY_PALETTES[weekday]["bg"]
         bg_photo = Image.new("RGB", (W, H), bg_color)
 
+    total = len(slides_text)
     slides_imgs = []
     for i, text in enumerate(slides_text, 1):
-        img = create_slide(text, bg_photo.copy(), weekday, i, NUM_SLIDES)
+        img = create_slide(text, bg_photo.copy(), weekday, i, total)
         slides_imgs.append(img)
-        print(f"     Karte {i}/{NUM_SLIDES} erstellt ✓")
+        print(f"     Karte {i}/{total} erstellt ✓")
 
     print("3/4  Bild + Caption werden hochgeladen …")
     image_urls = []
@@ -589,7 +634,7 @@ def main():
     upload_caption(caption, date_str)
 
     print("4/4  Vorschau-E-Mail wird gesendet …")
-    send_preview_email(image_urls, caption, date_str)
+    send_preview_email(image_urls, caption, date_str, post_type)
 
     print("✓ Fertig! Lisa erhält jetzt die Vorschau-E-Mail zur Freigabe.")
 
