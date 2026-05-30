@@ -2,24 +2,23 @@ import os
 import sys
 import json
 import io
+import base64
+import time
 import textwrap
 from datetime import datetime
 
 import anthropic
-import cloudinary
-import cloudinary.uploader
 import requests
 from PIL import Image, ImageDraw, ImageFont
 
 
 # ── Konfiguration aus Umgebungsvariablen ──────────────────────────────────────
 
-ANTHROPIC_API_KEY   = os.environ["ANTHROPIC_API_KEY"]
-IG_ACCESS_TOKEN     = os.environ["INSTAGRAM_ACCESS_TOKEN"]
-IG_BUSINESS_ID      = os.environ["INSTAGRAM_BUSINESS_ID"]
-CLOUDINARY_CLOUD    = os.environ["CLOUDINARY_CLOUD_NAME"]
-CLOUDINARY_API_KEY  = os.environ["CLOUDINARY_API_KEY"]
-CLOUDINARY_API_SECRET = os.environ["CLOUDINARY_API_SECRET"]
+ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
+IG_ACCESS_TOKEN   = os.environ["INSTAGRAM_ACCESS_TOKEN"]
+IG_BUSINESS_ID    = os.environ["INSTAGRAM_BUSINESS_ID"]
+GITHUB_TOKEN      = os.environ["GITHUB_TOKEN"]           # automatisch in GitHub Actions
+GITHUB_REPO       = os.environ["GITHUB_REPOSITORY"]      # z.B. "physiogoldschmidt-prog/goldgesund-instagram-automation"
 
 # Themen je Wochentag (Montag=0 … Sonntag=6)
 WEEKDAY_THEMES = {
@@ -182,26 +181,37 @@ def create_image(image_text: str) -> Image.Image:
     return img
 
 
-# ── Cloudinary-Upload ─────────────────────────────────────────────────────────
+# ── Bild-Upload via GitHub ────────────────────────────────────────────────────
 
 def upload_image(img: Image.Image) -> str:
-    cloudinary.config(
-        cloud_name=CLOUDINARY_CLOUD,
-        api_key=CLOUDINARY_API_KEY,
-        api_secret=CLOUDINARY_API_SECRET,
-        secure=True,
-    )
+    """Bild in GitHub-Repo speichern und öffentliche Raw-URL zurückgeben."""
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=95)
-    buf.seek(0)
+    content = base64.b64encode(buf.getvalue()).decode()
 
-    result = cloudinary.uploader.upload(
-        buf,
-        folder="goldgesund-instagram",
-        public_id=f"post-{datetime.now().strftime('%Y%m%d-%H%M')}",
-        overwrite=True,
-    )
-    return result["secure_url"]
+    filename = f"posts/{datetime.now().strftime('%Y-%m-%d')}.jpg"
+    api_url  = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{filename}"
+    headers  = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+
+    # Prüfen ob Datei schon existiert (SHA nötig für Update)
+    r = requests.get(api_url, headers=headers, timeout=10)
+    payload = {
+        "message": f"Post image {datetime.now().strftime('%Y-%m-%d')}",
+        "content": content,
+    }
+    if r.status_code == 200:
+        payload["sha"] = r.json()["sha"]
+
+    r = requests.put(api_url, headers=headers, json=payload, timeout=30)
+    r.raise_for_status()
+
+    # Kurz warten bis GitHub die Datei verarbeitet hat
+    time.sleep(5)
+
+    return f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{filename}"
 
 
 # ── Instagram Graph API ───────────────────────────────────────────────────────
