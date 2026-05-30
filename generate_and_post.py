@@ -345,8 +345,7 @@ def create_slide(image_text: str,
     img_rgba = img.convert("RGBA")
     orn_top = load_ornament("ornament_top.png")
     img_rgba.paste(orn_top, (0, 45), orn_top)
-    orn_bot = load_ornament("ornament_bottom.png")
-    img_rgba.paste(orn_bot, (0, 760), orn_bot)
+    # kein unteres Ornament — nur goldgesund unten
     img  = img_rgba.convert("RGB")
     draw = ImageDraw.Draw(img)
 
@@ -394,28 +393,29 @@ def create_slide(image_text: str,
     brand = "goldgesund"
     bbox  = draw.textbbox((0, 0), brand, font=f_allura)
     bw    = bbox[2] - bbox[0]
-    draw.text(((W - bw) // 2, H - 38), brand, font=f_allura, fill=accent)
+    draw.text(((W - bw) // 2, H - 75), brand, font=f_allura, fill=accent)
 
     # ── Swipe-Hinweis auf Karte 1 ─────────────────────────────────
-    if slide_num == 1:
+    if slide_num == 1 and total_slides > 1:
         swipe_text = "→ weitertippen"
         bbox_s  = draw.textbbox((0, 0), swipe_text, font=f_small)
         sw      = bbox_s[2] - bbox_s[0]
-        draw.text((W - sw - 32, H - 70), swipe_text, font=f_small, fill=accent)
+        draw.text((W - sw - 32, H - 135), swipe_text, font=f_small, fill=accent)
 
-    # ── Karten-Nummer (Punkte) ────────────────────────────────────
-    dot_r    = 5
-    dot_gap  = 18
-    total_w  = total_slides * dot_r * 2 + (total_slides - 1) * (dot_gap - dot_r * 2)
-    start_x  = (W - total_w) // 2
-    dot_y    = H - 80
-    for j in range(total_slides):
-        cx = start_x + j * dot_gap
-        filled = (j == slide_num - 1)
-        draw.ellipse(
-            [cx - dot_r, dot_y - dot_r, cx + dot_r, dot_y + dot_r],
-            fill=accent if filled else (*accent[:3], 100),
-        )
+    # ── Karten-Nummer (Punkte) — nur bei Carousel ─────────────────
+    if total_slides > 1:
+        dot_r    = 5
+        dot_gap  = 18
+        total_w  = total_slides * dot_r * 2 + (total_slides - 1) * (dot_gap - dot_r * 2)
+        start_x  = (W - total_w) // 2
+        dot_y    = H - 112
+        for j in range(total_slides):
+            cx = start_x + j * dot_gap
+            filled = (j == slide_num - 1)
+            draw.ellipse(
+                [cx - dot_r, dot_y - dot_r, cx + dot_r, dot_y + dot_r],
+                fill=accent if filled else (*accent[:3], 100),
+            )
 
     return img
 
