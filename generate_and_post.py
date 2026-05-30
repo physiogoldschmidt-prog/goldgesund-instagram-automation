@@ -98,10 +98,19 @@ Die vollständige Caption inkl. Hashtags"""
 
 W, H = 1080, 1080
 
-CREAM  = (250, 250, 247)
-GOLD   = (200, 150,  62)
-GREEN  = ( 29, 158, 117)
-DARK   = ( 44,  44,  42)
+GOLD  = (200, 150,  62)   # #C8963E
+CREAM = (242, 236, 216)   # warmes Creme
+
+# Hintergrundfarben je Wochentag — Lila / Salbeigrün / Creme abwechselnd
+WEEKDAY_PALETTES = {
+    0: {"bg": ( 74,  45, 122), "text": CREAM,          "accent": GOLD},  # Mo: Lila
+    1: {"bg": (107, 143, 113), "text": CREAM,          "accent": GOLD},  # Di: Salbeigrün
+    2: {"bg": CREAM,           "text": ( 61,  36,  98), "accent": GOLD},  # Mi: Creme
+    3: {"bg": ( 74,  45, 122), "text": CREAM,          "accent": GOLD},  # Do: Lila
+    4: {"bg": (107, 143, 113), "text": CREAM,          "accent": GOLD},  # Fr: Salbeigrün
+    5: {"bg": ( 94,  59, 130), "text": CREAM,          "accent": GOLD},  # Sa: Dunkellila
+    6: {"bg": CREAM,           "text": ( 61,  36,  98), "accent": GOLD},  # So: Creme
+}
 
 FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
 
@@ -114,55 +123,145 @@ def load_font(name: str, size: int) -> ImageFont.FreeTypeFont:
         return ImageFont.load_default()
 
 
+def draw_lotus(draw, cx: int, cy: int, size: int, color: tuple) -> None:
+    """Zeichnet ein stilisiertes Lotus-Ornament mit gepunkteten Linien."""
+    s = size
+    lw = max(2, s // 12)
+
+    # Mittleres Hauptblatt (hoch)
+    draw.arc([cx - s//4, cy - s, cx + s//4, cy + s//8],
+             start=210, end=330, fill=color, width=lw)
+    # Linkes Blatt
+    draw.arc([cx - s*3//4, cy - s*2//3, cx + s//8, cy + s//4],
+             start=210, end=330, fill=color, width=lw)
+    # Rechtes Blatt
+    draw.arc([cx - s//8, cy - s*2//3, cx + s*3//4, cy + s//4],
+             start=210, end=330, fill=color, width=lw)
+    # Basis-Bogen
+    draw.arc([cx - s//3, cy - s//6, cx + s//3, cy + s//3],
+             start=10, end=170, fill=color, width=lw)
+
+    # Gepunktete Linien links und rechts
+    dot_y = cy - s // 10
+    dot_r = lw
+    start_x = s // 2 + s // 4
+    for i in range(8):
+        dx = start_x + i * (s // 2)
+        draw.ellipse([cx - dx - dot_r, dot_y - dot_r,
+                      cx - dx + dot_r, dot_y + dot_r], fill=color)
+        draw.ellipse([cx + dx - dot_r, dot_y - dot_r,
+                      cx + dx + dot_r, dot_y + dot_r], fill=color)
+
+
+def wrap_text(text: str, font, max_width: int) -> list[str]:
+    """Bricht Text auf mehrere Zeilen um."""
+    words = text.split()
+    lines, current = [], ""
+    draw_tmp = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    for word in words:
+        test = (current + " " + word).strip()
+        w = draw_tmp.textbbox((0, 0), test, font=font)[2]
+        if w <= max_width:
+            current = test
+        else:
+            if current:
+                lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return lines
+
+
 def create_image(image_text: str) -> Image.Image:
-    img = Image.new("RGB", (W, H), CREAM)
+    weekday = datetime.now().weekday()
+    palette = WEEKDAY_PALETTES[weekday]
+    bg_color   = palette["bg"]
+    text_color = palette["text"]
+    accent     = palette["accent"]
+
+    img  = Image.new("RGB", (W, H), bg_color)
     draw = ImageDraw.Draw(img)
 
-    f_allura    = load_font("Allura-Regular.ttf",       64)
-    f_brand_sm  = load_font("CormorantGaramond-Regular.ttf", 30)
-    f_body      = load_font("CormorantGaramond-Regular.ttf", 62)
-    f_body_sm   = load_font("CormorantGaramond-Regular.ttf", 50)
+    # Schriften
+    f_allura = load_font("Allura-Regular.ttf", 52)
+    f_body   = load_font("CormorantGaramond-Regular.ttf", 82)
+    f_body_sm= load_font("CormorantGaramond-Regular.ttf", 66)
 
-    margin = 80
-    lw = 2
-    draw.rectangle([margin, margin, W - margin, margin + lw], fill=GOLD)
-    draw.rectangle([margin, H - margin - lw, W - margin, H - margin], fill=GOLD)
+    # ── Lotus oben ──────────────────────────────────────────────
+    draw_lotus(draw, W // 2, 165, 55, accent)
 
-    for cx, cy in [(margin, margin), (W - margin, margin),
-                   (margin, H - margin), (W - margin, H - margin)]:
-        r = 6
-        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=GREEN)
+    # ── Lotus unten (gespiegelt via vertikalem Flip) ─────────────
+    # Wir zeichnen ihn auf einem Hilfs-Bild und flippen es
+    lotus_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(lotus_layer)
+    draw_lotus(ld, W // 2, H - 165, 55, accent)
+    lotus_flipped = lotus_layer.transpose(Image.FLIP_TOP_BOTTOM)
+    img.paste(Image.new("RGB", (W, H), bg_color), (0, 0))
+    img = Image.new("RGB", (W, H), bg_color)
+    draw = ImageDraw.Draw(img)
+    draw_lotus(draw, W // 2, 165, 55, accent)
 
-    brand = "goldgesund"
-    bbox = draw.textbbox((0, 0), brand, font=f_allura)
-    bw = bbox[2] - bbox[0]
-    draw.text(((W - bw) // 2, 125), brand, font=f_allura, fill=GOLD)
+    # Unteren Lotus: einfach um 180° drehen zeichnen
+    # Wir spiegeln die Y-Koordinaten der draw_lotus-Aufrufe
+    s = 55
+    cy_bot = H - 165
+    lw = max(2, s // 12)
+    draw.arc([W//2 - s//4, cy_bot - s//8, W//2 + s//4, cy_bot + s],
+             start=30, end=150, fill=accent, width=lw)
+    draw.arc([W//2 - s*3//4, cy_bot - s//4, W//2 + s//8, cy_bot + s*2//3],
+             start=30, end=150, fill=accent, width=lw)
+    draw.arc([W//2 - s//8, cy_bot - s//4, W//2 + s*3//4, cy_bot + s*2//3],
+             start=30, end=150, fill=accent, width=lw)
+    draw.arc([W//2 - s//3, cy_bot - s//3, W//2 + s//3, cy_bot + s//6],
+             start=190, end=350, fill=accent, width=lw)
+    dot_y_bot = cy_bot + s // 10
+    dot_r = lw
+    start_x = s // 2 + s // 4
+    for i in range(8):
+        dx = start_x + i * (s // 2)
+        draw.ellipse([W//2 - dx - dot_r, dot_y_bot - dot_r,
+                      W//2 - dx + dot_r, dot_y_bot + dot_r], fill=accent)
+        draw.ellipse([W//2 + dx - dot_r, dot_y_bot - dot_r,
+                      W//2 + dx + dot_r, dot_y_bot + dot_r], fill=accent)
 
-    sep_y = 215
-    draw.rectangle([300, sep_y, W - 300, sep_y + 1], fill=GOLD)
-
-    lines = image_text.split("\n")
-    f_main = f_body if len(lines) <= 2 else f_body_sm
-    line_h = 75 if len(lines) <= 2 else 65
-
-    total_text_h = len(lines) * line_h
-    text_start_y = (H - total_text_h) // 2 + 30
-
-    for i, line in enumerate(lines):
-        line = line.strip()
-        if not line:
+    # ── Haupttext zentriert ───────────────────────────────────────
+    max_text_w = W - 140
+    lines_raw = image_text.split("\n")
+    # Schriftgröße wählen
+    all_lines = []
+    for raw_line in lines_raw:
+        raw_line = raw_line.strip()
+        if not raw_line:
             continue
+        wrapped = wrap_text(raw_line, f_body, max_text_w)
+        all_lines.extend(wrapped)
+
+    f_main = f_body if len(all_lines) <= 3 else f_body_sm
+    line_h = 105 if f_main == f_body else 88
+
+    # Nochmal umbrechen mit ggf. kleinerer Schrift
+    all_lines = []
+    for raw_line in lines_raw:
+        raw_line = raw_line.strip()
+        if not raw_line:
+            continue
+        wrapped = wrap_text(raw_line, f_main, max_text_w)
+        all_lines.extend(wrapped)
+
+    total_h  = len(all_lines) * line_h
+    start_y  = (H - total_h) // 2 - 10
+
+    for i, line in enumerate(all_lines):
         bbox = draw.textbbox((0, 0), line, font=f_main)
         lw_px = bbox[2] - bbox[0]
         x = (W - lw_px) // 2
-        draw.text((x, text_start_y + i * line_h), line, font=f_main, fill=DARK)
+        draw.text((x, start_y + i * line_h), line, font=f_main, fill=text_color)
 
-    draw.rectangle([280, H - 195, W - 280, H - 193], fill=GOLD)
-
-    footer = "Lisa Goldschmidt · Heilpraktikerin"
-    bbox = draw.textbbox((0, 0), footer, font=f_brand_sm)
-    fw = bbox[2] - bbox[0]
-    draw.text(((W - fw) // 2, H - 175), footer, font=f_brand_sm, fill=GOLD)
+    # ── „goldgesund" klein unten ──────────────────────────────────
+    brand = "goldgesund"
+    bbox  = draw.textbbox((0, 0), brand, font=f_allura)
+    bw    = bbox[2] - bbox[0]
+    draw.text(((W - bw) // 2, H - 100), brand, font=f_allura, fill=accent)
 
     return img
 
@@ -332,6 +431,7 @@ def main():
 
     print("2/4  Bild wird erstellt …")
     img = create_image(image_text)
+    print(f"     Hintergrundfarbe: {WEEKDAY_PALETTES[datetime.now().weekday()]['bg']}")
 
     print("3/4  Bild + Caption werden hochgeladen …")
     image_url = upload_image(img, date_str)
