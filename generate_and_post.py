@@ -32,6 +32,10 @@ NUM_SLIDES = 4   # Anzahl Karten im Carousel
 # Mo=0, Mi=2, Fr=4 → Carousel  |  Di=1, Do=3, Sa=5, So=6 → Einzelbild
 CAROUSEL_DAYS = {0, 2, 4}
 
+# Di=1, Do=3, Sa=5 → cleaner einfarbiger Hintergrund + Ornament
+# Mo=0, Mi=2, Fr=4, So=6 → Naturfoto, kein Ornament
+CLEAN_DAYS = {1, 3, 5}
+
 # Pexels-Suchbegriffe je Wochentag (passend zum Thema)
 WEEKDAY_PHOTO_SEARCH = {
     0: "misty forest morning light",
@@ -337,20 +341,31 @@ def create_slide(image_text: str,
                  bg_photo: Image.Image,
                  weekday: int,
                  slide_num: int,
-                 total_slides: int) -> Image.Image:
+                 total_slides: int,
+                 use_clean: bool = False) -> Image.Image:
     """Erstellt eine einzelne Carousel-Karte."""
     palette    = WEEKDAY_PALETTES[weekday]
     bg_color   = palette["bg"]
     text_color = palette["text"]
     accent     = palette["accent"]
 
-    # ── Naturfoto + Overlay ───────────────────────────────────────
-    overlay = Image.new("RGBA", (W, H), (*bg_color, 168))   # ~66 % Deckkraft
-    img = bg_photo.convert("RGBA")
-    img = Image.alpha_composite(img, overlay).convert("RGB")
-
-    # keine Ornamente bei Naturfotos
-    draw = ImageDraw.Draw(img)
+    if use_clean:
+        # ── Einfarbiger Hintergrund ───────────────────────────────
+        img  = bg_photo.copy()   # ist bereits Volltonfarbe aus main()
+        draw = ImageDraw.Draw(img)
+        # Ornament oben
+        img_rgba = img.convert("RGBA")
+        orn_top  = load_ornament("ornament_top.png")
+        img_rgba.paste(orn_top, (0, 45), orn_top)
+        img  = img_rgba.convert("RGB")
+        draw = ImageDraw.Draw(img)
+    else:
+        # ── Naturfoto + Farboverlay ───────────────────────────────
+        overlay = Image.new("RGBA", (W, H), (*bg_color, 168))
+        img = bg_photo.convert("RGBA")
+        img = Image.alpha_composite(img, overlay).convert("RGB")
+        # kein Ornament bei Naturfotos
+        draw = ImageDraw.Draw(img)
 
     # Schriften
     f_allura  = load_font("Allura-Regular.ttf", 38)
@@ -615,19 +630,25 @@ def main():
         print(f"     Karte {i}: {t!r}")
     print(f"     Caption-Vorschau: {caption[:80]}…")
 
-    print("2/4  Naturfoto laden + Karten erstellen …")
-    try:
-        bg_photo = download_nature_photo(weekday, week_number)
-        print(f"     Foto geladen ✓")
-    except Exception as e:
-        print(f"     Foto-Download fehlgeschlagen ({e}), nutze Volltonfarbe")
+    print("2/4  Hintergrund laden + Karten erstellen …")
+    use_clean = weekday in CLEAN_DAYS
+    if use_clean:
         bg_color = WEEKDAY_PALETTES[weekday]["bg"]
         bg_photo = Image.new("RGB", (W, H), bg_color)
+        print(f"     Stil: Clean (einfarbig + Ornament) ✓")
+    else:
+        try:
+            bg_photo = download_nature_photo(weekday, week_number)
+            print(f"     Stil: Naturfoto geladen ✓")
+        except Exception as e:
+            print(f"     Foto-Download fehlgeschlagen ({e}), nutze Volltonfarbe")
+            bg_color = WEEKDAY_PALETTES[weekday]["bg"]
+            bg_photo = Image.new("RGB", (W, H), bg_color)
 
     total = len(slides_text)
     slides_imgs = []
     for i, text in enumerate(slides_text, 1):
-        img = create_slide(text, bg_photo.copy(), weekday, i, total)
+        img = create_slide(text, bg_photo.copy(), weekday, i, total, use_clean=use_clean)
         slides_imgs.append(img)
         print(f"     Karte {i}/{total} erstellt ✓")
 
