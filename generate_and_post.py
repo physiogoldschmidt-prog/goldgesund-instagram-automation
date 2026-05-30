@@ -23,6 +23,8 @@ MAKE_APPROVAL_WEBHOOK   = os.environ["MAKE_APPROVAL_WEBHOOK"]
 PEXELS_API_KEY          = os.environ["PEXELS_API_KEY"]
 PREVIEW_EMAIL           = "physiogoldschmidt@gmail.com"
 
+NUM_SLIDES = 4   # Anzahl Karten im Carousel
+
 # Pexels-Suchbegriffe je Wochentag (passend zum Thema)
 WEEKDAY_PHOTO_SEARCH = {
     0: "misty forest morning light",
@@ -64,7 +66,6 @@ def get_latest_briefing() -> str:
         # Neueste Datei zuerst (Dateiname beginnt mit YYYY-MM-DD)
         files.sort(key=lambda f: f["name"], reverse=True)
         latest = files[0]
-        # Inhalt herunterladen (base64-kodiert)
         content_r = requests.get(latest["url"], headers=headers, timeout=15)
         content_r.raise_for_status()
         raw_bytes = base64.b64decode(content_r.json()["content"])
@@ -80,7 +81,6 @@ def extract_briefing_highlights(briefing: str) -> str:
     """Extrahiert die wichtigsten Abschnitte aus dem Briefing für den Prompt."""
     if not briefing:
         return ""
-    # Suche nach relevanten Abschnitten
     relevant_keywords = [
         "Was die Wissenschaft sagt",
         "Was gerade im Trend ist",
@@ -95,19 +95,16 @@ def extract_briefing_highlights(briefing: str) -> str:
     capturing = False
     captured_sections = 0
     for line in lines:
-        # Neue Überschrift → prüfen ob relevant
         if line.startswith("#"):
             capturing = any(kw.lower() in line.lower() for kw in relevant_keywords)
             if capturing:
                 selected_lines.append(line)
                 captured_sections += 1
-            # Maximal 2 Abschnitte um Prompt nicht zu überladen
             if captured_sections >= 2:
                 break
         elif capturing:
             selected_lines.append(line)
     result = "\n".join(selected_lines).strip()
-    # Auf max. 600 Zeichen kürzen damit der Prompt übersichtlich bleibt
     if len(result) > 600:
         result = result[:597] + "…"
     return result
@@ -115,8 +112,8 @@ def extract_briefing_highlights(briefing: str) -> str:
 
 # ── Content-Generierung via Claude ───────────────────────────────────────────
 
-def generate_content() -> tuple[str, str]:
-    """Gibt (bild_text, caption) zurück."""
+def generate_content() -> tuple[list[str], str]:
+    """Gibt (liste mit 4 Bild-Texten, caption) zurück."""
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
     weekday = datetime.now().weekday()
@@ -141,27 +138,43 @@ Lisa ist Heilpraktikerin (Osteopathie, Psychosomatik) in Berlin. Ihr Ton: warm, 
 Wochentag-Thema: {theme}
 Wochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas.{briefing_section}
 
-Erstelle bitte:
+Erstelle bitte einen Instagram-CAROUSEL mit 4 Bildkarten + Caption.
 
-IMAGE_TEXT:
-Kurzer, kraftvoller Text für die Bildkarte.
-Max. 3 Zeilen, pro Zeile max. 32 Zeichen.
-Kann ein Zitat, eine Frage oder eine kurze Aussage sein.
-Schreib jeden Satz/jede Zeile in eine neue Zeile.
+Aufbau der 4 Karten:
+KARTE 1 – Hook: Große Aussage oder Frage die sofort neugierig macht. Soll Lust machen weiterzuswipen.
+KARTE 2 – Hintergrundwissen: Erklärung, Zusammenhang im Körper, wissenschaftliche Einordnung (alltagsnah).
+KARTE 3 – Praktischer Impuls: Was kann die Person jetzt sofort tun oder spüren? Konkret, körpernah.
+KARTE 4 – Abschluss: Ruhiger, einladender Abschluss. Kein harter Verkauf — eher: "Komm gerne vorbei" oder eine offene Frage ans Publikum.
 
-CAPTION:
-Instagram-Caption, 180–240 Wörter.
-Aufbau:
-1. Erste Zeile: starker Hook (Frage oder Gefühl ansprechen) — macht Lust weiterzulesen
-2. Kurzer Absatz: Erklärung oder Einblick aus Lisas Arbeit
-3. Kurzer praktischer Impuls oder Gedanke
-4. Sanfter Abschluss (kein harter CTA, eher: "Komm gerne in die Praxis", "Speichern lohnt sich", o.ä.)
+Für jede Karte gilt:
+- Max. 3 Zeilen, pro Zeile max. 32 Zeichen
+- Jede Zeile auf einer neuen Zeile
+- Kraftvoll und kurz — kein Fülltext
+
+CAPTION (für den ganzen Carousel-Post):
+1. Erste Zeile: starker Hook (passt zu Karte 1) — macht Lust zu lesen
+2. Kurzer Absatz: Vertiefung aus Lisas Arbeit
+3. Kurzer praktischer Impuls
+4. Sanfter Abschluss (kein harter CTA)
 5. Leerzeile
 6. 10–12 relevante Hashtags (deutsch + englisch gemischt)
+Länge: 180–240 Wörter
 
 Antworte GENAU in diesem Format — keine anderen Texte davor oder danach:
 
-===IMAGE_TEXT===
+===SLIDE_1===
+Zeile 1
+Zeile 2
+Zeile 3
+===SLIDE_2===
+Zeile 1
+Zeile 2
+Zeile 3
+===SLIDE_3===
+Zeile 1
+Zeile 2
+Zeile 3
+===SLIDE_4===
 Zeile 1
 Zeile 2
 Zeile 3
@@ -170,19 +183,29 @@ Die vollständige Caption inkl. Hashtags"""
 
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=1200,
+        max_tokens=1600,
         messages=[{"role": "user", "content": prompt}],
     )
 
     raw = message.content[0].text.strip()
 
-    if "===IMAGE_TEXT===" not in raw or "===CAPTION===" not in raw:
-        raise ValueError(f"Unerwartetes Antwort-Format:\n{raw}")
+    # Validierung
+    for i in range(1, NUM_SLIDES + 1):
+        if f"===SLIDE_{i}===" not in raw:
+            raise ValueError(f"Unerwartetes Antwort-Format (SLIDE_{i} fehlt):\n{raw}")
+    if "===CAPTION===" not in raw:
+        raise ValueError(f"Unerwartetes Antwort-Format (CAPTION fehlt):\n{raw}")
 
-    image_text = raw.split("===IMAGE_TEXT===")[1].split("===CAPTION===")[0].strip()
+    # Parsen
+    slides = []
+    for i in range(1, NUM_SLIDES + 1):
+        marker_start = f"===SLIDE_{i}==="
+        marker_end   = f"===SLIDE_{i+1}===" if i < NUM_SLIDES else "===CAPTION==="
+        text = raw.split(marker_start)[1].split(marker_end)[0].strip()
+        slides.append(text)
+
     caption = raw.split("===CAPTION===")[1].strip()
-
-    return image_text, caption
+    return slides, caption
 
 
 # ── Bild-Erstellung via Pillow ────────────────────────────────────────────────
@@ -217,15 +240,13 @@ def download_nature_photo(weekday: int, week_number: int) -> Image.Image:
     r.raise_for_status()
     photos = r.json().get("photos", [])
     if not photos:
-        # Fallback auf allgemeines Naturfoto
         params["query"] = "nature green"
         r = requests.get("https://api.pexels.com/v1/search",
                          headers=headers, params=params, timeout=15)
         photos = r.json().get("photos", [])
-    # Wochennummer sorgt für Abwechslung
-    photo    = photos[week_number % len(photos)]
+    photo     = photos[week_number % len(photos)]
     photo_url = photo["src"]["large2x"]
-    img_r    = requests.get(photo_url, timeout=30)
+    img_r     = requests.get(photo_url, timeout=30)
     img_r.raise_for_status()
     img = Image.open(io.BytesIO(img_r.content)).convert("RGB")
     return ImageOps.fit(img, (W, H), method=Image.LANCZOS)
@@ -264,48 +285,42 @@ def wrap_text(text: str, font, max_width: int) -> list[str]:
     return lines
 
 
-def create_image(image_text: str) -> Image.Image:
-    weekday     = datetime.now().weekday()
-    week_number = datetime.now().isocalendar()[1]
-    palette     = WEEKDAY_PALETTES[weekday]
-    bg_color    = palette["bg"]
-    text_color  = palette["text"]
-    accent      = palette["accent"]
+def create_slide(image_text: str,
+                 bg_photo: Image.Image,
+                 weekday: int,
+                 slide_num: int,
+                 total_slides: int) -> Image.Image:
+    """Erstellt eine einzelne Carousel-Karte."""
+    palette    = WEEKDAY_PALETTES[weekday]
+    bg_color   = palette["bg"]
+    text_color = palette["text"]
+    accent     = palette["accent"]
 
-    # ── Naturfoto laden + Overlay drüberlegen ────────────────────
-    try:
-        bg = download_nature_photo(weekday, week_number)
-        print(f"     Foto geladen ✓")
-    except Exception as e:
-        print(f"     Foto-Download fehlgeschlagen ({e}), nutze Volltonfarbe")
-        bg = Image.new("RGB", (W, H), bg_color)
-
+    # ── Naturfoto + Overlay ───────────────────────────────────────
     overlay = Image.new("RGBA", (W, H), (*bg_color, 168))   # ~66 % Deckkraft
-    img = bg.convert("RGBA")
+    img = bg_photo.convert("RGBA")
     img = Image.alpha_composite(img, overlay).convert("RGB")
-    draw = ImageDraw.Draw(img)
 
-    # Schriften
-    f_allura = load_font("Allura-Regular.ttf", 38)
-    f_body   = load_font("CormorantGaramond-Regular.ttf", 82)
-    f_body_sm= load_font("CormorantGaramond-Regular.ttf", 66)
-
-    # ── Ornamente aus Canva-Vorlage einblenden ───────────────────
+    # ── Ornamente ─────────────────────────────────────────────────
     img_rgba = img.convert("RGBA")
-
     orn_top = load_ornament("ornament_top.png")
     img_rgba.paste(orn_top, (0, 45), orn_top)
-
     orn_bot = load_ornament("ornament_bottom.png")
     img_rgba.paste(orn_bot, (0, 760), orn_bot)
-
     img  = img_rgba.convert("RGB")
     draw = ImageDraw.Draw(img)
 
+    # Schriften
+    f_allura  = load_font("Allura-Regular.ttf", 38)
+    f_body    = load_font("CormorantGaramond-Regular.ttf", 82)
+    f_body_sm = load_font("CormorantGaramond-Regular.ttf", 66)
+    f_small   = load_font("CormorantGaramond-Regular.ttf", 28)
+
     # ── Haupttext zentriert ───────────────────────────────────────
     max_text_w = W - 140
-    lines_raw = image_text.split("\n")
-    # Schriftgröße wählen
+    lines_raw  = image_text.split("\n")
+
+    # Schriftgröße ermitteln
     all_lines = []
     for raw_line in lines_raw:
         raw_line = raw_line.strip()
@@ -317,7 +332,7 @@ def create_image(image_text: str) -> Image.Image:
     f_main = f_body if len(all_lines) <= 3 else f_body_sm
     line_h = 105 if f_main == f_body else 88
 
-    # Nochmal umbrechen mit ggf. kleinerer Schrift
+    # Nochmal umbrechen mit korrekter Schrift
     all_lines = []
     for raw_line in lines_raw:
         raw_line = raw_line.strip()
@@ -326,8 +341,8 @@ def create_image(image_text: str) -> Image.Image:
         wrapped = wrap_text(raw_line, f_main, max_text_w)
         all_lines.extend(wrapped)
 
-    total_h  = len(all_lines) * line_h
-    start_y  = (H - total_h) // 2 - 10
+    total_h = len(all_lines) * line_h
+    start_y = (H - total_h) // 2 - 10
 
     for i, line in enumerate(all_lines):
         bbox = draw.textbbox((0, 0), line, font=f_main)
@@ -341,6 +356,27 @@ def create_image(image_text: str) -> Image.Image:
     bw    = bbox[2] - bbox[0]
     draw.text(((W - bw) // 2, H - 38), brand, font=f_allura, fill=accent)
 
+    # ── Swipe-Hinweis auf Karte 1 ─────────────────────────────────
+    if slide_num == 1:
+        swipe_text = "→ weitertippen"
+        bbox_s  = draw.textbbox((0, 0), swipe_text, font=f_small)
+        sw      = bbox_s[2] - bbox_s[0]
+        draw.text((W - sw - 32, H - 70), swipe_text, font=f_small, fill=accent)
+
+    # ── Karten-Nummer (Punkte) ────────────────────────────────────
+    dot_r    = 5
+    dot_gap  = 18
+    total_w  = total_slides * dot_r * 2 + (total_slides - 1) * (dot_gap - dot_r * 2)
+    start_x  = (W - total_w) // 2
+    dot_y    = H - 80
+    for j in range(total_slides):
+        cx = start_x + j * dot_gap
+        filled = (j == slide_num - 1)
+        draw.ellipse(
+            [cx - dot_r, dot_y - dot_r, cx + dot_r, dot_y + dot_r],
+            fill=accent if filled else (*accent[:3], 100),
+        )
+
     return img
 
 
@@ -353,46 +389,65 @@ def upload_to_github(content_b64: str, filename: str, commit_msg: str) -> str:
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
     }
-
     r = requests.get(api_url, headers=headers, timeout=10)
     payload = {"message": commit_msg, "content": content_b64}
     if r.status_code == 200:
         payload["sha"] = r.json()["sha"]
-
     r = requests.put(api_url, headers=headers, json=payload, timeout=30)
     r.raise_for_status()
     return f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{filename}"
 
 
-def upload_image(img: Image.Image, date_str: str) -> str:
-    """Bild in GitHub-Repo speichern."""
+def upload_slide(img: Image.Image, date_str: str, slide_num: int) -> str:
+    """Eine Carousel-Karte in GitHub speichern, Raw-URL zurückgeben."""
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=95)
-    content = base64.b64encode(buf.getvalue()).decode()
-    filename = f"posts/{date_str}.jpg"
-    upload_to_github(content, filename, f"Post image {date_str}")
-    time.sleep(5)
+    content  = base64.b64encode(buf.getvalue()).decode()
+    filename = f"posts/{date_str}_{slide_num}.jpg"
+    upload_to_github(content, filename, f"Carousel slide {slide_num} {date_str}")
+    time.sleep(3)
     return f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{filename}"
 
 
 def upload_caption(caption: str, date_str: str) -> None:
-    """Caption als .txt in GitHub-Repo speichern (wird vom Freigabe-Szenario gelesen)."""
-    content = base64.b64encode(caption.encode("utf-8")).decode()
+    """Caption als .txt in GitHub-Repo speichern."""
+    content  = base64.b64encode(caption.encode("utf-8")).decode()
     filename = f"posts/{date_str}.txt"
     upload_to_github(content, filename, f"Post caption {date_str}")
 
 
 # ── Vorschau-E-Mail via Brevo ─────────────────────────────────────────────────
 
-def send_preview_email(image_url: str, caption: str, date_str: str) -> None:
-    """Schickt Lisa eine Vorschau-E-Mail. Erst nach Klick auf den Button wird gepostet."""
+def send_preview_email(image_urls: list[str], caption: str, date_str: str) -> None:
+    """Schickt Lisa eine Vorschau-E-Mail mit allen Carousel-Karten."""
 
-    # Bild-URL und Caption direkt im Link übergeben → Make.com postet beim Klick sofort
-    params = urlencode({"image_url": image_url, "caption": caption})
-    approval_url = f"{MAKE_APPROVAL_WEBHOOK}?{params}"
+    # Alle Bild-URLs + Caption im Webhook-Link übergeben
+    params = {"caption": caption}
+    for i, url in enumerate(image_urls, start=1):
+        params[f"image_url_{i}"] = url
+    approval_url = f"{MAKE_APPROVAL_WEBHOOK}?{urlencode(params)}"
 
-    # Caption-Zeilenumbrüche für HTML umwandeln
+    # Caption-Zeilenumbrüche für HTML
     caption_html = caption.replace("\n", "<br>")
+
+    # Karten-Vorschau: nebeneinander (2 × 2)
+    def slide_cell(url: str, num: int) -> str:
+        return f"""
+        <td style="padding:6px;vertical-align:top;width:50%;">
+          <p style="margin:0 0 4px;font-size:11px;color:#aaa;
+                    letter-spacing:1px;text-transform:uppercase;text-align:center;">
+            Karte {num}
+          </p>
+          <img src="{url}" width="220" alt="Karte {num}"
+               style="width:220px;max-width:100%;border-radius:4px;
+                      border:1px solid #e0ddd5;display:block;margin:0 auto;">
+        </td>"""
+
+    rows_html = ""
+    for i in range(0, len(image_urls), 2):
+        pair = image_urls[i:i+2]
+        cells = "".join(slide_cell(u, i + j + 1) for j, u in enumerate(pair))
+        rows_html += f'<tr>{cells}</tr>'
 
     html = f"""<!DOCTYPE html>
 <html lang="de">
@@ -412,22 +467,22 @@ def send_preview_email(image_url: str, caption: str, date_str: str) -> None:
           <td style="background:#FAFAF7;padding:32px 40px 16px;text-align:center;
                      border-bottom:2px solid #C8963E;">
             <p style="margin:0;font-size:13px;color:#888;letter-spacing:2px;
-                      text-transform:uppercase;">Dein heutiger Instagram-Post</p>
+                      text-transform:uppercase;">Dein heutiger Instagram-Carousel</p>
             <h1 style="margin:8px 0 0;font-size:36px;color:#C8963E;font-weight:normal;
                        font-family:'Palatino Linotype',Palatino,serif;
                        font-style:italic;">goldgesund</h1>
-            <p style="margin:4px 0 0;font-size:13px;color:#999;">{date_str}</p>
+            <p style="margin:4px 0 0;font-size:13px;color:#999;">{date_str} &nbsp;·&nbsp; {len(image_urls)} Karten</p>
           </td>
         </tr>
 
-        <!-- Bild-Vorschau -->
+        <!-- Karten-Vorschau -->
         <tr>
-          <td style="padding:32px 40px 0;text-align:center;">
-            <p style="margin:0 0 12px;font-size:13px;color:#888;
-                      letter-spacing:1px;text-transform:uppercase;">Bildkarte</p>
-            <img src="{image_url}" width="480" alt="Instagram Bildkarte"
-                 style="width:480px;max-width:100%;border-radius:4px;
-                        border:1px solid #e0ddd5;">
+          <td style="padding:28px 40px 0;">
+            <p style="margin:0 0 14px;font-size:13px;color:#888;
+                      letter-spacing:1px;text-transform:uppercase;">Bildkarten</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              {rows_html}
+            </table>
           </td>
         </tr>
 
@@ -452,7 +507,7 @@ def send_preview_email(image_url: str, caption: str, date_str: str) -> None:
                       text-decoration:none;font-size:17px;font-weight:bold;
                       padding:16px 48px;border-radius:4px;
                       letter-spacing:0.5px;">
-              ✅ &nbsp; Jetzt auf Instagram veröffentlichen
+              ✅ &nbsp; Jetzt als Carousel auf Instagram veröffentlichen
             </a>
             <p style="margin:16px 0 0;font-size:13px;color:#aaa;">
               Wenn du nichts tust, wird heute kein Post veröffentlicht.
@@ -479,7 +534,7 @@ def send_preview_email(image_url: str, caption: str, date_str: str) -> None:
     payload = {
         "sender": {"name": "GOLDGESUND", "email": "physiogoldschmidt@gmail.com"},
         "to": [{"email": PREVIEW_EMAIL, "name": "Lisa"}],
-        "subject": f"✨ Instagram-Vorschau {date_str} — bitte freigeben",
+        "subject": f"✨ Instagram-Carousel {date_str} — bitte freigeben",
         "htmlContent": html,
     }
 
@@ -499,24 +554,42 @@ def send_preview_email(image_url: str, caption: str, date_str: str) -> None:
 # ── Hauptprogramm ─────────────────────────────────────────────────────────────
 
 def main():
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    print(f"GOLDGESUND Instagram — {date_str}")
+    date_str    = datetime.now().strftime("%Y-%m-%d")
+    weekday     = datetime.now().weekday()
+    week_number = datetime.now().isocalendar()[1]
+    print(f"GOLDGESUND Instagram Carousel — {date_str}")
 
     print("1/4  Content wird generiert (inkl. Briefing-Recherche) …")
-    image_text, caption = generate_content()
-    print(f"     Bild-Text: {image_text!r}")
+    slides_text, caption = generate_content()
+    for i, t in enumerate(slides_text, 1):
+        print(f"     Karte {i}: {t!r}")
     print(f"     Caption-Vorschau: {caption[:80]}…")
 
-    print("2/4  Bild wird erstellt …")
-    img = create_image(image_text)
+    print("2/4  Naturfoto laden + alle Karten erstellen …")
+    try:
+        bg_photo = download_nature_photo(weekday, week_number)
+        print(f"     Foto geladen ✓")
+    except Exception as e:
+        print(f"     Foto-Download fehlgeschlagen ({e}), nutze Volltonfarbe")
+        bg_color = WEEKDAY_PALETTES[weekday]["bg"]
+        bg_photo = Image.new("RGB", (W, H), bg_color)
+
+    slides_imgs = []
+    for i, text in enumerate(slides_text, 1):
+        img = create_slide(text, bg_photo.copy(), weekday, i, NUM_SLIDES)
+        slides_imgs.append(img)
+        print(f"     Karte {i}/{NUM_SLIDES} erstellt ✓")
 
     print("3/4  Bild + Caption werden hochgeladen …")
-    image_url = upload_image(img, date_str)
+    image_urls = []
+    for i, img in enumerate(slides_imgs, 1):
+        url = upload_slide(img, date_str, i)
+        image_urls.append(url)
+        print(f"     Karte {i} hochgeladen: {url}")
     upload_caption(caption, date_str)
-    print(f"     Bild-URL: {image_url}")
 
     print("4/4  Vorschau-E-Mail wird gesendet …")
-    send_preview_email(image_url, caption, date_str)
+    send_preview_email(image_urls, caption, date_str)
 
     print("✓ Fertig! Lisa erhält jetzt die Vorschau-E-Mail zur Freigabe.")
 
