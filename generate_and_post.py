@@ -359,9 +359,9 @@ def create_slide(image_text: str,
 
     # Schriften
     f_allura  = load_font("Allura-Regular.ttf", 38)
-    f_body    = load_font("CormorantGaramond-Regular.ttf", 82)
-    f_body_sm = load_font("CormorantGaramond-Regular.ttf", 66)
-    f_small   = load_font("CormorantGaramond-Regular.ttf", 28)
+    f_body    = load_font("Alice-Regular.ttf", 72)
+    f_body_sm = load_font("Alice-Regular.ttf", 56)
+    f_small   = load_font("Alice-Regular.ttf", 26)
 
     # ── Haupttext zentriert ───────────────────────────────────────
     max_text_w = W - 140
