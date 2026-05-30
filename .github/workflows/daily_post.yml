@@ -27,9 +27,11 @@ jobs:
       - name: Abhängigkeiten installieren
         run: pip install -r requirements.txt
 
-      - name: GOLDGESUND Post erstellen und veröffentlichen
+      - name: GOLDGESUND Post erstellen und Vorschau senden
         env:
-          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN:        ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY:   ${{ github.repository }}
+          ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN:           ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY:      ${{ github.repository }}
+          BREVO_API_KEY:          ${{ secrets.BREVO_API_KEY }}
+          MAKE_APPROVAL_WEBHOOK:  ${{ secrets.MAKE_APPROVAL_WEBHOOK }}
         run: python generate_and_post.py

@@ -14,10 +14,12 @@ from PIL import Image, ImageDraw, ImageFont
 
 # ── Konfiguration aus Umgebungsvariablen ──────────────────────────────────────
 
-ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
-GITHUB_TOKEN      = os.environ["GITHUB_TOKEN"]
-GITHUB_REPO       = os.environ["GITHUB_REPOSITORY"]
-MAKE_WEBHOOK_URL  = "https://hook.eu1.make.com/qukledgynel20u37zeyb0mhq4qojimvm"
+ANTHROPIC_API_KEY       = os.environ["ANTHROPIC_API_KEY"]
+GITHUB_TOKEN            = os.environ["GITHUB_TOKEN"]
+GITHUB_REPO             = os.environ["GITHUB_REPOSITORY"]
+BREVO_API_KEY           = os.environ["BREVO_API_KEY"]
+MAKE_APPROVAL_WEBHOOK   = os.environ["MAKE_APPROVAL_WEBHOOK"]   # Freigabe-Webhook in Make.com
+PREVIEW_EMAIL           = "physiogoldschmidt@gmail.com"
 
 # Themen je Wochentag (Montag=0 … Sonntag=6)
 WEEKDAY_THEMES = {
@@ -38,7 +40,6 @@ def generate_content() -> tuple[str, str]:
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
     weekday = datetime.now().weekday()
-    # Wochen-Nummer sorgt für Abwechslung innerhalb desselben Wochentags
     week_number = datetime.now().isocalendar()[1]
     theme = WEEKDAY_THEMES[weekday]
 
@@ -83,7 +84,6 @@ Die vollständige Caption inkl. Hashtags"""
 
     raw = message.content[0].text.strip()
 
-    # Text zwischen den Trennzeichen herausschneiden
     if "===IMAGE_TEXT===" not in raw or "===CAPTION===" not in raw:
         raise ValueError(f"Unerwartetes Antwort-Format:\n{raw}")
 
@@ -97,11 +97,10 @@ Die vollständige Caption inkl. Hashtags"""
 
 W, H = 1080, 1080
 
-# GOLDGESUND-Farben
-CREAM  = (250, 250, 247)   # #FAFAF7
-GOLD   = (200, 150,  62)   # #C8963E
-GREEN  = ( 29, 158, 117)   # #1D9E75
-DARK   = ( 44,  44,  42)   # #2C2C2A
+CREAM  = (250, 250, 247)
+GOLD   = (200, 150,  62)
+GREEN  = ( 29, 158, 117)
+DARK   = ( 44,  44,  42)
 
 FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
 
@@ -114,56 +113,39 @@ def load_font(name: str, size: int) -> ImageFont.FreeTypeFont:
         return ImageFont.load_default()
 
 
-def centered_text(draw, text, y, font, color, max_width=860):
-    """Zeichnet Text horizontal zentriert bei y."""
-    bbox = draw.textbbox((0, 0), text, font=font)
-    tw = bbox[2] - bbox[0]
-    x = (W - tw) // 2
-    # Falls Text zu breit: leicht kleiner wrappen (einfach zeichnen, kein weiteres Wrapping hier)
-    draw.text((x, y), text, font=font, fill=color)
-    return bbox[3] - bbox[1]  # Höhe der Zeile
-
-
 def create_image(image_text: str) -> Image.Image:
     img = Image.new("RGB", (W, H), CREAM)
     draw = ImageDraw.Draw(img)
 
-    # Schriften laden
     f_allura    = load_font("Allura-Regular.ttf",       64)
     f_brand_sm  = load_font("CormorantGaramond-Regular.ttf", 30)
     f_body      = load_font("CormorantGaramond-Regular.ttf", 62)
     f_body_sm   = load_font("CormorantGaramond-Regular.ttf", 50)
 
-    # ── Rahmen-Linien (oben + unten) ──
     margin = 80
-    lw = 2  # Linienbreite
+    lw = 2
     draw.rectangle([margin, margin, W - margin, margin + lw], fill=GOLD)
     draw.rectangle([margin, H - margin - lw, W - margin, H - margin], fill=GOLD)
 
-    # ── Ecken-Punkte ──
     for cx, cy in [(margin, margin), (W - margin, margin),
                    (margin, H - margin), (W - margin, H - margin)]:
         r = 6
         draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=GREEN)
 
-    # ── Markenname oben ──
     brand = "goldgesund"
     bbox = draw.textbbox((0, 0), brand, font=f_allura)
     bw = bbox[2] - bbox[0]
     draw.text(((W - bw) // 2, 125), brand, font=f_allura, fill=GOLD)
 
-    # ── Dünne goldene Linie unter Markenname ──
     sep_y = 215
     draw.rectangle([300, sep_y, W - 300, sep_y + 1], fill=GOLD)
 
-    # ── Haupt-Text (zentriert, mehrzeilig) ──
     lines = image_text.split("\n")
-    # Schriftgröße je nach Zeilenanzahl anpassen
     f_main = f_body if len(lines) <= 2 else f_body_sm
     line_h = 75 if len(lines) <= 2 else 65
 
     total_text_h = len(lines) * line_h
-    text_start_y = (H - total_text_h) // 2 + 30  # leicht nach unten versetzt (Markenname oben)
+    text_start_y = (H - total_text_h) // 2 + 30
 
     for i, line in enumerate(lines):
         line = line.strip()
@@ -174,7 +156,6 @@ def create_image(image_text: str) -> Image.Image:
         x = (W - lw_px) // 2
         draw.text((x, text_start_y + i * line_h), line, font=f_main, fill=DARK)
 
-    # ── Trennlinie + Name unten ──
     draw.rectangle([280, H - 195, W - 280, H - 193], fill=GOLD)
 
     footer = "Lisa Goldschmidt · Heilpraktikerin"
@@ -187,54 +168,159 @@ def create_image(image_text: str) -> Image.Image:
 
 # ── Bild-Upload via GitHub ────────────────────────────────────────────────────
 
-def upload_image(img: Image.Image) -> str:
-    """Bild in GitHub-Repo speichern und öffentliche Raw-URL zurückgeben."""
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=95)
-    content = base64.b64encode(buf.getvalue()).decode()
-
-    filename = f"posts/{datetime.now().strftime('%Y-%m-%d')}.jpg"
-    api_url  = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{filename}"
-    headers  = {
+def upload_to_github(content_b64: str, filename: str, commit_msg: str) -> str:
+    """Datei in GitHub-Repo speichern und Raw-URL zurückgeben."""
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{filename}"
+    headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
     }
 
-    # Prüfen ob Datei schon existiert (SHA nötig für Update)
     r = requests.get(api_url, headers=headers, timeout=10)
-    payload = {
-        "message": f"Post image {datetime.now().strftime('%Y-%m-%d')}",
-        "content": content,
-    }
+    payload = {"message": commit_msg, "content": content_b64}
     if r.status_code == 200:
         payload["sha"] = r.json()["sha"]
 
     r = requests.put(api_url, headers=headers, json=payload, timeout=30)
     r.raise_for_status()
-
-    # Kurz warten bis GitHub die Datei verarbeitet hat
-    time.sleep(5)
-
     return f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{filename}"
 
 
-# ── Make.com Webhook → Instagram ──────────────────────────────────────────────
+def upload_image(img: Image.Image, date_str: str) -> str:
+    """Bild in GitHub-Repo speichern."""
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=95)
+    content = base64.b64encode(buf.getvalue()).decode()
+    filename = f"posts/{date_str}.jpg"
+    upload_to_github(content, filename, f"Post image {date_str}")
+    time.sleep(5)
+    return f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{filename}"
 
-def post_to_instagram(image_url: str, caption: str) -> None:
+
+def upload_caption(caption: str, date_str: str) -> None:
+    """Caption als .txt in GitHub-Repo speichern (wird vom Freigabe-Szenario gelesen)."""
+    content = base64.b64encode(caption.encode("utf-8")).decode()
+    filename = f"posts/{date_str}.txt"
+    upload_to_github(content, filename, f"Post caption {date_str}")
+
+
+# ── Vorschau-E-Mail via Brevo ─────────────────────────────────────────────────
+
+def send_preview_email(image_url: str, caption: str, date_str: str) -> None:
+    """Schickt Lisa eine Vorschau-E-Mail. Erst nach Klick auf den Button wird gepostet."""
+
+    approval_url = f"{MAKE_APPROVAL_WEBHOOK}?date={date_str}"
+
+    # Caption-Zeilenumbrüche für HTML umwandeln
+    caption_html = caption.replace("\n", "<br>")
+
+    html = f"""<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#f4f4f0;font-family:Georgia,serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f0;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0"
+             style="background:#FAFAF7;border-radius:8px;overflow:hidden;
+                    box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#FAFAF7;padding:32px 40px 16px;text-align:center;
+                     border-bottom:2px solid #C8963E;">
+            <p style="margin:0;font-size:13px;color:#888;letter-spacing:2px;
+                      text-transform:uppercase;">Dein heutiger Instagram-Post</p>
+            <h1 style="margin:8px 0 0;font-size:36px;color:#C8963E;font-weight:normal;
+                       font-family:'Palatino Linotype',Palatino,serif;
+                       font-style:italic;">goldgesund</h1>
+            <p style="margin:4px 0 0;font-size:13px;color:#999;">{date_str}</p>
+          </td>
+        </tr>
+
+        <!-- Bild-Vorschau -->
+        <tr>
+          <td style="padding:32px 40px 0;text-align:center;">
+            <p style="margin:0 0 12px;font-size:13px;color:#888;
+                      letter-spacing:1px;text-transform:uppercase;">Bildkarte</p>
+            <img src="{image_url}" width="480" alt="Instagram Bildkarte"
+                 style="width:480px;max-width:100%;border-radius:4px;
+                        border:1px solid #e0ddd5;">
+          </td>
+        </tr>
+
+        <!-- Caption -->
+        <tr>
+          <td style="padding:28px 40px 0;">
+            <p style="margin:0 0 10px;font-size:13px;color:#888;
+                      letter-spacing:1px;text-transform:uppercase;">Caption</p>
+            <div style="background:#f8f6f0;border-left:3px solid #C8963E;
+                        padding:16px 20px;border-radius:0 4px 4px 0;
+                        font-size:15px;line-height:1.7;color:#2C2C2A;">
+              {caption_html}
+            </div>
+          </td>
+        </tr>
+
+        <!-- Button -->
+        <tr>
+          <td style="padding:36px 40px;text-align:center;">
+            <a href="{approval_url}"
+               style="display:inline-block;background:#1D9E75;color:#ffffff;
+                      text-decoration:none;font-size:17px;font-weight:bold;
+                      padding:16px 48px;border-radius:4px;
+                      letter-spacing:0.5px;">
+              ✅ &nbsp; Jetzt auf Instagram veröffentlichen
+            </a>
+            <p style="margin:16px 0 0;font-size:13px;color:#aaa;">
+              Wenn du nichts tust, wird heute kein Post veröffentlicht.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:16px 40px 28px;text-align:center;
+                     border-top:1px solid #e8e5de;">
+            <p style="margin:0;font-size:12px;color:#bbb;">
+              GOLDGESUND · Lisa Goldschmidt · Heilpraktikerin Berlin
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+    payload = {
+        "sender": {"name": "GOLDGESUND", "email": "physiogoldschmidt@gmail.com"},
+        "to": [{"email": PREVIEW_EMAIL, "name": "Lisa"}],
+        "subject": f"✨ Instagram-Vorschau {date_str} — bitte freigeben",
+        "htmlContent": html,
+    }
+
     r = requests.post(
-        MAKE_WEBHOOK_URL,
-        json={"image_url": image_url, "caption": caption},
-        timeout=30,
+        "https://api.brevo.com/v3/smtp/email",
+        headers={
+            "api-key": BREVO_API_KEY,
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=20,
     )
     r.raise_for_status()
-    print(f"  Make.com Webhook aufgerufen ✓")
+    print(f"  Vorschau-E-Mail gesendet an {PREVIEW_EMAIL} ✓")
 
 
 # ── Hauptprogramm ─────────────────────────────────────────────────────────────
 
 def main():
-    today = datetime.now().strftime("%Y-%m-%d %H:%M")
-    print(f"GOLDGESUND Instagram — {today}")
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    print(f"GOLDGESUND Instagram — {date_str}")
 
     print("1/4  Content wird generiert …")
     image_text, caption = generate_content()
@@ -244,14 +330,15 @@ def main():
     print("2/4  Bild wird erstellt …")
     img = create_image(image_text)
 
-    print("3/4  Bild wird hochgeladen …")
-    image_url = upload_image(img)
-    print(f"     URL: {image_url}")
+    print("3/4  Bild + Caption werden hochgeladen …")
+    image_url = upload_image(img, date_str)
+    upload_caption(caption, date_str)
+    print(f"     Bild-URL: {image_url}")
 
-    print("4/4  Wird auf Instagram gepostet …")
-    post_to_instagram(image_url, caption)
+    print("4/4  Vorschau-E-Mail wird gesendet …")
+    send_preview_email(image_url, caption, date_str)
 
-    print("✓ Fertig!")
+    print("✓ Fertig! Lisa erhält jetzt die Vorschau-E-Mail zur Freigabe.")
 
 
 if __name__ == "__main__":
