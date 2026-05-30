@@ -218,7 +218,7 @@ def create_image(image_text: str) -> Image.Image:
     img_rgba.paste(orn_top, (0, 45), orn_top)
 
     orn_bot = load_ornament("ornament_bottom.png")
-    img_rgba.paste(orn_bot, (0, H - 133), orn_bot)
+    img_rgba.paste(orn_bot, (0, 858), orn_bot)   # wie im Original-Template
 
     img  = img_rgba.convert("RGB")
     draw = ImageDraw.Draw(img)
@@ -260,7 +260,7 @@ def create_image(image_text: str) -> Image.Image:
     brand = "goldgesund"
     bbox  = draw.textbbox((0, 0), brand, font=f_allura)
     bw    = bbox[2] - bbox[0]
-    draw.text(((W - bw) // 2, H - 100), brand, font=f_allura, fill=accent)
+    draw.text(((W - bw) // 2, H - 58), brand, font=f_allura, fill=accent)
 
     return img
 
