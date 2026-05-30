@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 import anthropic
 import requests
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 
 # ── Konfiguration aus Umgebungsvariablen ──────────────────────────────────────
@@ -19,8 +19,20 @@ ANTHROPIC_API_KEY       = os.environ["ANTHROPIC_API_KEY"]
 GITHUB_TOKEN            = os.environ["GITHUB_TOKEN"]
 GITHUB_REPO             = os.environ["GITHUB_REPOSITORY"]
 BREVO_API_KEY           = os.environ["BREVO_API_KEY"]
-MAKE_APPROVAL_WEBHOOK   = os.environ["MAKE_APPROVAL_WEBHOOK"]   # Freigabe-Webhook in Make.com
+MAKE_APPROVAL_WEBHOOK   = os.environ["MAKE_APPROVAL_WEBHOOK"]
+PEXELS_API_KEY          = os.environ["PEXELS_API_KEY"]
 PREVIEW_EMAIL           = "physiogoldschmidt@gmail.com"
+
+# Pexels-Suchbegriffe je Wochentag (passend zum Thema)
+WEEKDAY_PHOTO_SEARCH = {
+    0: "misty forest morning light",
+    1: "zen garden stones water",
+    2: "calm lake reflection nature",
+    3: "autumn leaves soft light",
+    4: "wildflowers meadow sunlight",
+    5: "golden hour landscape nature",
+    6: "peaceful forest stillness",
+}
 
 # Themen je Wochentag (Montag=0 … Sonntag=6)
 WEEKDAY_THEMES = {
@@ -115,6 +127,30 @@ WEEKDAY_PALETTES = {
 FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
 
 
+def download_nature_photo(weekday: int, week_number: int) -> Image.Image:
+    """Lädt ein passendes Naturfoto von Pexels (kostenlos)."""
+    query = WEEKDAY_PHOTO_SEARCH[weekday]
+    headers = {"Authorization": PEXELS_API_KEY}
+    params  = {"query": query, "orientation": "square", "size": "large", "per_page": 15}
+    r = requests.get("https://api.pexels.com/v1/search",
+                     headers=headers, params=params, timeout=15)
+    r.raise_for_status()
+    photos = r.json().get("photos", [])
+    if not photos:
+        # Fallback auf allgemeines Naturfoto
+        params["query"] = "nature green"
+        r = requests.get("https://api.pexels.com/v1/search",
+                         headers=headers, params=params, timeout=15)
+        photos = r.json().get("photos", [])
+    # Wochennummer sorgt für Abwechslung
+    photo    = photos[week_number % len(photos)]
+    photo_url = photo["src"]["large2x"]
+    img_r    = requests.get(photo_url, timeout=30)
+    img_r.raise_for_status()
+    img = Image.open(io.BytesIO(img_r.content)).convert("RGB")
+    return ImageOps.fit(img, (W, H), method=Image.LANCZOS)
+
+
 def load_font(name: str, size: int) -> ImageFont.FreeTypeFont:
     path = os.path.join(FONT_DIR, name)
     try:
@@ -173,13 +209,24 @@ def wrap_text(text: str, font, max_width: int) -> list[str]:
 
 
 def create_image(image_text: str) -> Image.Image:
-    weekday = datetime.now().weekday()
-    palette = WEEKDAY_PALETTES[weekday]
-    bg_color   = palette["bg"]
-    text_color = palette["text"]
-    accent     = palette["accent"]
+    weekday     = datetime.now().weekday()
+    week_number = datetime.now().isocalendar()[1]
+    palette     = WEEKDAY_PALETTES[weekday]
+    bg_color    = palette["bg"]
+    text_color  = palette["text"]
+    accent      = palette["accent"]
 
-    img  = Image.new("RGB", (W, H), bg_color)
+    # ── Naturfoto laden + Overlay drüberlegen ────────────────────
+    try:
+        bg = download_nature_photo(weekday, week_number)
+        print(f"     Foto geladen ✓")
+    except Exception as e:
+        print(f"     Foto-Download fehlgeschlagen ({e}), nutze Volltonfarbe")
+        bg = Image.new("RGB", (W, H), bg_color)
+
+    overlay = Image.new("RGBA", (W, H), (*bg_color, 168))   # ~66 % Deckkraft
+    img = bg.convert("RGBA")
+    img = Image.alpha_composite(img, overlay).convert("RGB")
     draw = ImageDraw.Draw(img)
 
     # Schriften

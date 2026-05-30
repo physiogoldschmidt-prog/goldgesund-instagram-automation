@@ -34,4 +34,5 @@ jobs:
           GITHUB_REPOSITORY:      ${{ github.repository }}
           BREVO_API_KEY:          ${{ secrets.BREVO_API_KEY }}
           MAKE_APPROVAL_WEBHOOK:  ${{ secrets.MAKE_APPROVAL_WEBHOOK }}
+          PEXELS_API_KEY:         ${{ secrets.PEXELS_API_KEY }}
         run: python generate_and_post.py
