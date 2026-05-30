@@ -124,7 +124,8 @@ WEEKDAY_PALETTES = {
     6: {"bg": CREAM,           "text": ( 61,  36,  98), "accent": GOLD},  # So: Creme
 }
 
-FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
+FONT_DIR   = os.path.join(os.path.dirname(__file__), "fonts")
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 
 def download_nature_photo(weekday: int, week_number: int) -> Image.Image:
@@ -159,34 +160,10 @@ def load_font(name: str, size: int) -> ImageFont.FreeTypeFont:
         return ImageFont.load_default()
 
 
-def draw_lotus(draw, cx: int, cy: int, size: int, color: tuple) -> None:
-    """Zeichnet ein stilisiertes Lotus-Ornament mit gepunkteten Linien."""
-    s = size
-    lw = max(2, s // 12)
-
-    # Mittleres Hauptblatt (hoch)
-    draw.arc([cx - s//4, cy - s, cx + s//4, cy + s//8],
-             start=210, end=330, fill=color, width=lw)
-    # Linkes Blatt
-    draw.arc([cx - s*3//4, cy - s*2//3, cx + s//8, cy + s//4],
-             start=210, end=330, fill=color, width=lw)
-    # Rechtes Blatt
-    draw.arc([cx - s//8, cy - s*2//3, cx + s*3//4, cy + s//4],
-             start=210, end=330, fill=color, width=lw)
-    # Basis-Bogen
-    draw.arc([cx - s//3, cy - s//6, cx + s//3, cy + s//3],
-             start=10, end=170, fill=color, width=lw)
-
-    # Gepunktete Linien links und rechts
-    dot_y = cy - s // 10
-    dot_r = lw
-    start_x = s // 2 + s // 4
-    for i in range(8):
-        dx = start_x + i * (s // 2)
-        draw.ellipse([cx - dx - dot_r, dot_y - dot_r,
-                      cx - dx + dot_r, dot_y + dot_r], fill=color)
-        draw.ellipse([cx + dx - dot_r, dot_y - dot_r,
-                      cx + dx + dot_r, dot_y + dot_r], fill=color)
+def load_ornament(filename: str) -> Image.Image:
+    """Lädt ein Ornament-PNG aus dem assets/-Ordner (mit Transparenz)."""
+    path = os.path.join(ASSETS_DIR, filename)
+    return Image.open(path).convert("RGBA")
 
 
 def wrap_text(text: str, font, max_width: int) -> list[str]:
@@ -234,42 +211,17 @@ def create_image(image_text: str) -> Image.Image:
     f_body   = load_font("CormorantGaramond-Regular.ttf", 82)
     f_body_sm= load_font("CormorantGaramond-Regular.ttf", 66)
 
-    # ── Lotus oben ──────────────────────────────────────────────
-    draw_lotus(draw, W // 2, 165, 55, accent)
+    # ── Ornamente aus Canva-Vorlage einblenden ───────────────────
+    img_rgba = img.convert("RGBA")
 
-    # ── Lotus unten (gespiegelt via vertikalem Flip) ─────────────
-    # Wir zeichnen ihn auf einem Hilfs-Bild und flippen es
-    lotus_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ld = ImageDraw.Draw(lotus_layer)
-    draw_lotus(ld, W // 2, H - 165, 55, accent)
-    lotus_flipped = lotus_layer.transpose(Image.FLIP_TOP_BOTTOM)
-    img.paste(Image.new("RGB", (W, H), bg_color), (0, 0))
-    img = Image.new("RGB", (W, H), bg_color)
+    orn_top = load_ornament("ornament_top.png")
+    img_rgba.paste(orn_top, (0, 45), orn_top)
+
+    orn_bot = load_ornament("ornament_bottom.png")
+    img_rgba.paste(orn_bot, (0, H - 133), orn_bot)
+
+    img  = img_rgba.convert("RGB")
     draw = ImageDraw.Draw(img)
-    draw_lotus(draw, W // 2, 165, 55, accent)
-
-    # Unteren Lotus: einfach um 180° drehen zeichnen
-    # Wir spiegeln die Y-Koordinaten der draw_lotus-Aufrufe
-    s = 55
-    cy_bot = H - 165
-    lw = max(2, s // 12)
-    draw.arc([W//2 - s//4, cy_bot - s//8, W//2 + s//4, cy_bot + s],
-             start=30, end=150, fill=accent, width=lw)
-    draw.arc([W//2 - s*3//4, cy_bot - s//4, W//2 + s//8, cy_bot + s*2//3],
-             start=30, end=150, fill=accent, width=lw)
-    draw.arc([W//2 - s//8, cy_bot - s//4, W//2 + s*3//4, cy_bot + s*2//3],
-             start=30, end=150, fill=accent, width=lw)
-    draw.arc([W//2 - s//3, cy_bot - s//3, W//2 + s//3, cy_bot + s//6],
-             start=190, end=350, fill=accent, width=lw)
-    dot_y_bot = cy_bot + s // 10
-    dot_r = lw
-    start_x = s // 2 + s // 4
-    for i in range(8):
-        dx = start_x + i * (s // 2)
-        draw.ellipse([W//2 - dx - dot_r, dot_y_bot - dot_r,
-                      W//2 - dx + dot_r, dot_y_bot + dot_r], fill=accent)
-        draw.ellipse([W//2 + dx - dot_r, dot_y_bot - dot_r,
-                      W//2 + dx + dot_r, dot_y_bot + dot_r], fill=accent)
 
     # ── Haupttext zentriert ───────────────────────────────────────
     max_text_w = W - 140
@@ -478,7 +430,6 @@ def main():
 
     print("2/4  Bild wird erstellt …")
     img = create_image(image_text)
-    print(f"     Hintergrundfarbe: {WEEKDAY_PALETTES[datetime.now().weekday()]['bg']}")
 
     print("3/4  Bild + Caption werden hochgeladen …")
     image_url = upload_image(img, date_str)
