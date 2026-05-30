@@ -207,7 +207,7 @@ def create_image(image_text: str) -> Image.Image:
     draw = ImageDraw.Draw(img)
 
     # Schriften
-    f_allura = load_font("Allura-Regular.ttf", 52)
+    f_allura = load_font("Allura-Regular.ttf", 38)
     f_body   = load_font("CormorantGaramond-Regular.ttf", 82)
     f_body_sm= load_font("CormorantGaramond-Regular.ttf", 66)
 
@@ -260,7 +260,7 @@ def create_image(image_text: str) -> Image.Image:
     brand = "goldgesund"
     bbox  = draw.textbbox((0, 0), brand, font=f_allura)
     bw    = bbox[2] - bbox[0]
-    draw.text(((W - bw) // 2, H - 42), brand, font=f_allura, fill=accent)
+    draw.text(((W - bw) // 2, H - 38), brand, font=f_allura, fill=accent)
 
     return img
 
