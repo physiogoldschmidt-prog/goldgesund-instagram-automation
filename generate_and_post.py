@@ -349,12 +349,7 @@ def create_slide(image_text: str,
     img = bg_photo.convert("RGBA")
     img = Image.alpha_composite(img, overlay).convert("RGB")
 
-    # ── Ornamente ─────────────────────────────────────────────────
-    img_rgba = img.convert("RGBA")
-    orn_top = load_ornament("ornament_top.png")
-    img_rgba.paste(orn_top, (0, 45), orn_top)
-    # kein unteres Ornament — nur goldgesund unten
-    img  = img_rgba.convert("RGB")
+    # keine Ornamente bei Naturfotos
     draw = ImageDraw.Draw(img)
 
     # Schriften
