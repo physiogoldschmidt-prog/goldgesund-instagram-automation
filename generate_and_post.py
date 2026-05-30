@@ -23,6 +23,10 @@ MAKE_APPROVAL_WEBHOOK   = os.environ["MAKE_APPROVAL_WEBHOOK"]
 PEXELS_API_KEY          = os.environ["PEXELS_API_KEY"]
 PREVIEW_EMAIL           = "physiogoldschmidt@gmail.com"
 
+# Optionale manuelle Vorgaben (leer = automatisch)
+CUSTOM_THEME     = os.environ.get("CUSTOM_THEME", "").strip()
+CUSTOM_POST_TYPE = os.environ.get("CUSTOM_POST_TYPE", "").strip().lower()
+
 NUM_SLIDES = 4   # Anzahl Karten im Carousel
 
 # Mo=0, Mi=2, Fr=4 → Carousel  |  Di=1, Do=3, Sa=5, So=6 → Einzelbild
@@ -124,8 +128,12 @@ def generate_content() -> tuple[list[str], str]:
 
     weekday     = datetime.now().weekday()
     week_number = datetime.now().isocalendar()[1]
-    theme       = WEEKDAY_THEMES[weekday]
-    is_carousel = weekday in CAROUSEL_DAYS
+    theme       = CUSTOM_THEME if CUSTOM_THEME else WEEKDAY_THEMES[weekday]
+    # Post-Typ: manuelle Vorgabe hat Vorrang, sonst Wochentag-Regel
+    if CUSTOM_POST_TYPE in ("carousel", "single"):
+        is_carousel = (CUSTOM_POST_TYPE == "carousel")
+    else:
+        is_carousel = weekday in CAROUSEL_DAYS
 
     # Aktuelles Briefing laden
     briefing_raw        = get_latest_briefing()
@@ -598,7 +606,10 @@ def main():
     date_str    = datetime.now().strftime("%Y-%m-%d")
     weekday     = datetime.now().weekday()
     week_number = datetime.now().isocalendar()[1]
-    is_carousel = weekday in CAROUSEL_DAYS
+    if CUSTOM_POST_TYPE in ("carousel", "single"):
+        is_carousel = (CUSTOM_POST_TYPE == "carousel")
+    else:
+        is_carousel = weekday in CAROUSEL_DAYS
     post_type   = "carousel" if is_carousel else "single"
     day_names   = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
     print(f"GOLDGESUND Instagram — {date_str} ({day_names[weekday]}, {post_type.upper()})")

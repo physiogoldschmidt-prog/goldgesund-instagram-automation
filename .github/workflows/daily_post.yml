@@ -5,8 +5,17 @@ on:
     # Jeden Tag um 9:00 Uhr MEZ / MESZ (= 7:00 UTC Winter, 7:00 UTC Sommer)
     # GitHub Actions läuft in UTC → 7 Uhr UTC = 9 Uhr DE-Sommerzeit
     - cron: "0 7 * * *"
-  # Manueller Start möglich (zum Testen)
+  # Manueller Start mit optionalen Eingaben
   workflow_dispatch:
+    inputs:
+      thema:
+        description: 'Eigenes Thema (leer lassen = automatisch nach Wochentag)'
+        required: false
+        default: ''
+      post_typ:
+        description: 'Post-Typ: carousel oder single (leer lassen = automatisch)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -39,4 +48,6 @@ jobs:
           BREVO_API_KEY:          ${{ secrets.BREVO_API_KEY }}
           MAKE_APPROVAL_WEBHOOK:  ${{ secrets.MAKE_APPROVAL_WEBHOOK }}
           PEXELS_API_KEY:         ${{ secrets.PEXELS_API_KEY }}
+          CUSTOM_THEME:           ${{ github.event.inputs.thema }}
+          CUSTOM_POST_TYPE:       ${{ github.event.inputs.post_typ }}
         run: python generate_and_post.py
