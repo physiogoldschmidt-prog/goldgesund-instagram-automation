@@ -2,9 +2,9 @@ name: Täglicher GOLDGESUND Instagram Post
 
 on:
   schedule:
-    # Jeden Tag um 9:00 Uhr MEZ / MESZ (= 7:00 UTC Winter, 7:00 UTC Sommer)
-    # GitHub Actions läuft in UTC → 7 Uhr UTC = 9 Uhr DE-Sommerzeit
-    - cron: "0 7 * * *"
+    # Jeden Tag um 18:00 Uhr MESZ (= 16:00 UTC Sommer, 17:00 UTC Winter)
+    # GitHub Actions läuft in UTC → 16 Uhr UTC = 18 Uhr DE-Sommerzeit
+    - cron: "0 16 * * *"
   # Manueller Start mit optionalen Eingaben
   workflow_dispatch:
     inputs:
