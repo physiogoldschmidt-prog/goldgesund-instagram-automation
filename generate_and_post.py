@@ -46,6 +46,73 @@ WEEKDAY_THEMES = {
 }
 
 
+# ── Wöchentliches Briefing laden ─────────────────────────────────────────────
+
+def get_latest_briefing() -> str:
+    """Lädt das aktuellste Briefing aus dem briefings/-Ordner im GitHub-Repo."""
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/briefings"
+    try:
+        r = requests.get(api_url, headers=headers, timeout=10)
+        r.raise_for_status()
+        files = [f for f in r.json() if f["name"].endswith(".md")]
+        if not files:
+            return ""
+        # Neueste Datei zuerst (Dateiname beginnt mit YYYY-MM-DD)
+        files.sort(key=lambda f: f["name"], reverse=True)
+        latest = files[0]
+        # Inhalt herunterladen (base64-kodiert)
+        content_r = requests.get(latest["url"], headers=headers, timeout=15)
+        content_r.raise_for_status()
+        raw_bytes = base64.b64decode(content_r.json()["content"])
+        text = raw_bytes.decode("utf-8")
+        print(f"     Briefing geladen: {latest['name']} ✓")
+        return text
+    except Exception as e:
+        print(f"     Briefing konnte nicht geladen werden ({e}) — wird ohne Briefing fortgesetzt")
+        return ""
+
+
+def extract_briefing_highlights(briefing: str) -> str:
+    """Extrahiert die wichtigsten Abschnitte aus dem Briefing für den Prompt."""
+    if not briefing:
+        return ""
+    # Suche nach relevanten Abschnitten
+    relevant_keywords = [
+        "Was die Wissenschaft sagt",
+        "Was gerade im Trend ist",
+        "Neue Erkenntnisse",
+        "Highlights",
+        "Wichtigste Erkenntnisse",
+        "Forschung",
+        "Studien",
+    ]
+    lines = briefing.split("\n")
+    selected_lines = []
+    capturing = False
+    captured_sections = 0
+    for line in lines:
+        # Neue Überschrift → prüfen ob relevant
+        if line.startswith("#"):
+            capturing = any(kw.lower() in line.lower() for kw in relevant_keywords)
+            if capturing:
+                selected_lines.append(line)
+                captured_sections += 1
+            # Maximal 2 Abschnitte um Prompt nicht zu überladen
+            if captured_sections >= 2:
+                break
+        elif capturing:
+            selected_lines.append(line)
+    result = "\n".join(selected_lines).strip()
+    # Auf max. 600 Zeichen kürzen damit der Prompt übersichtlich bleibt
+    if len(result) > 600:
+        result = result[:597] + "…"
+    return result
+
+
 # ── Content-Generierung via Claude ───────────────────────────────────────────
 
 def generate_content() -> tuple[str, str]:
@@ -56,11 +123,23 @@ def generate_content() -> tuple[str, str]:
     week_number = datetime.now().isocalendar()[1]
     theme = WEEKDAY_THEMES[weekday]
 
+    # Aktuelles Briefing laden
+    briefing_raw = get_latest_briefing()
+    briefing_highlights = extract_briefing_highlights(briefing_raw)
+    briefing_section = ""
+    if briefing_highlights:
+        briefing_section = f"""
+Aktuelle Forschungserkenntnisse aus dem wöchentlichen Briefing:
+{briefing_highlights}
+
+Beziehe diese Erkenntnisse passend in den Content ein — als Inspiration, konkretes Beispiel oder aktuellen Bezug. Zitiere keine Studie namentlich, sondern integriere das Wissen natürlich.
+"""
+
     prompt = f"""Du bist Lisa Goldschmidts Content-Assistentin für ihren Instagram-Account GOLDGESUND.
 Lisa ist Heilpraktikerin (Osteopathie, Psychosomatik) in Berlin. Ihr Ton: warm, ruhig, klar, wissenschaftlich fundiert aber alltagsnah — keine Heilungsversprechen, keine lauten Claims.
 
 Wochentag-Thema: {theme}
-Wochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas.
+Wochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas.{briefing_section}
 
 Erstelle bitte:
 
@@ -423,7 +502,7 @@ def main():
     date_str = datetime.now().strftime("%Y-%m-%d")
     print(f"GOLDGESUND Instagram — {date_str}")
 
-    print("1/4  Content wird generiert …")
+    print("1/4  Content wird generiert (inkl. Briefing-Recherche) …")
     image_text, caption = generate_content()
     print(f"     Bild-Text: {image_text!r}")
     print(f"     Caption-Vorschau: {caption[:80]}…")
