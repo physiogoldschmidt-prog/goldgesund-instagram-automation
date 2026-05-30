@@ -32,9 +32,8 @@ NUM_SLIDES = 4   # Anzahl Karten im Carousel
 # Mo=0, Mi=2, Fr=4 → Carousel  |  Di=1, Do=3, Sa=5, So=6 → Einzelbild
 CAROUSEL_DAYS = {0, 2, 4}
 
-# Di=1, Do=3, Sa=5 → cleaner einfarbiger Hintergrund + Ornament
-# Mo=0, Mi=2, Fr=4, So=6 → Naturfoto, kein Ornament
-CLEAN_DAYS = {1, 3, 5}
+# Stil wechselt täglich: gerade Tageszahl = Naturfoto, ungerade = Clean+Ornament
+# → nie zwei gleiche Stile hintereinander im Feed
 
 # Pexels-Suchbegriffe je Wochentag (passend zum Thema)
 WEEKDAY_PHOTO_SEARCH = {
@@ -267,16 +266,18 @@ W, H = 1080, 1080
 GOLD  = (200, 150,  62)   # #C8963E
 CREAM = (242, 236, 216)   # warmes Creme
 
-# Hintergrundfarben je Wochentag — Lila / Salbeigrün / Creme abwechselnd
-WEEKDAY_PALETTES = {
-    0: {"bg": ( 74,  45, 122), "text": CREAM,          "accent": GOLD},  # Mo: Lila
-    1: {"bg": (107, 143, 113), "text": CREAM,          "accent": GOLD},  # Di: Salbeigrün
-    2: {"bg": CREAM,           "text": ( 61,  36,  98), "accent": GOLD},  # Mi: Creme
-    3: {"bg": ( 74,  45, 122), "text": CREAM,          "accent": GOLD},  # Do: Lila
-    4: {"bg": (107, 143, 113), "text": CREAM,          "accent": GOLD},  # Fr: Salbeigrün
-    5: {"bg": ( 94,  59, 130), "text": CREAM,          "accent": GOLD},  # Sa: Dunkellila
-    6: {"bg": CREAM,           "text": ( 61,  36,  98), "accent": GOLD},  # So: Creme
-}
+# Drei Brand-Farben — rotieren täglich: Lila → Salbeigrün → Creme → …
+# Im Feed (3 Spalten) zeigt jede Reihe automatisch alle drei Farben
+BRAND_COLORS = [
+    {"bg": ( 74,  45, 122), "text": CREAM,           "accent": GOLD},  # Lila
+    {"bg": (107, 143, 113), "text": CREAM,           "accent": GOLD},  # Salbeigrün
+    {"bg": CREAM,            "text": ( 61,  36,  98), "accent": GOLD},  # Creme
+]
+
+def get_palette() -> dict:
+    """Gibt die Tagesfarbe zurück — rotiert täglich durch alle drei Brand-Farben."""
+    day_of_year = datetime.now().timetuple().tm_yday
+    return BRAND_COLORS[day_of_year % 3]
 
 FONT_DIR   = os.path.join(os.path.dirname(__file__), "fonts")
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
@@ -344,7 +345,7 @@ def create_slide(image_text: str,
                  total_slides: int,
                  use_clean: bool = False) -> Image.Image:
     """Erstellt eine einzelne Carousel-Karte."""
-    palette    = WEEKDAY_PALETTES[weekday]
+    palette    = get_palette()
     bg_color   = palette["bg"]
     text_color = palette["text"]
     accent     = palette["accent"]
@@ -631,7 +632,8 @@ def main():
     print(f"     Caption-Vorschau: {caption[:80]}…")
 
     print("2/4  Hintergrund laden + Karten erstellen …")
-    use_clean = weekday in CLEAN_DAYS
+    day_of_year = datetime.now().timetuple().tm_yday
+    use_clean   = (day_of_year % 2 == 1)   # täglich abwechselnd
     if use_clean:
         bg_color = WEEKDAY_PALETTES[weekday]["bg"]
         bg_photo = Image.new("RGB", (W, H), bg_color)
