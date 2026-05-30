@@ -15,10 +15,9 @@ from PIL import Image, ImageDraw, ImageFont
 # ── Konfiguration aus Umgebungsvariablen ──────────────────────────────────────
 
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
-IG_ACCESS_TOKEN   = os.environ["INSTAGRAM_ACCESS_TOKEN"]
-IG_BUSINESS_ID    = os.environ["INSTAGRAM_BUSINESS_ID"]
-GITHUB_TOKEN      = os.environ["GITHUB_TOKEN"]           # automatisch in GitHub Actions
-GITHUB_REPO       = os.environ["GITHUB_REPOSITORY"]      # z.B. "physiogoldschmidt-prog/goldgesund-instagram-automation"
+GITHUB_TOKEN      = os.environ["GITHUB_TOKEN"]
+GITHUB_REPO       = os.environ["GITHUB_REPOSITORY"]
+MAKE_WEBHOOK_URL  = "https://hook.eu1.make.com/qukledgynel20u37zeyb0mhq4qojimvm"
 
 # Themen je Wochentag (Montag=0 … Sonntag=6)
 WEEKDAY_THEMES = {
@@ -214,39 +213,16 @@ def upload_image(img: Image.Image) -> str:
     return f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{filename}"
 
 
-# ── Instagram Graph API ───────────────────────────────────────────────────────
+# ── Make.com Webhook → Instagram ──────────────────────────────────────────────
 
-BASE = "https://graph.facebook.com/v21.0"
-
-
-def post_to_instagram(image_url: str, caption: str) -> str:
-    # Schritt 1: Media-Container erstellen
+def post_to_instagram(image_url: str, caption: str) -> None:
     r = requests.post(
-        f"{BASE}/{IG_BUSINESS_ID}/media",
-        data={
-            "image_url": image_url,
-            "caption": caption,
-            "access_token": IG_ACCESS_TOKEN,
-        },
+        MAKE_WEBHOOK_URL,
+        json={"image_url": image_url, "caption": caption},
         timeout=30,
     )
     r.raise_for_status()
-    creation_id = r.json()["id"]
-    print(f"  Media-Container: {creation_id}")
-
-    # Schritt 2: Veröffentlichen
-    r = requests.post(
-        f"{BASE}/{IG_BUSINESS_ID}/media_publish",
-        data={
-            "creation_id": creation_id,
-            "access_token": IG_ACCESS_TOKEN,
-        },
-        timeout=30,
-    )
-    r.raise_for_status()
-    post_id = r.json()["id"]
-    print(f"  Veröffentlicht! Post-ID: {post_id}")
-    return post_id
+    print(f"  Make.com Webhook aufgerufen ✓")
 
 
 # ── Hauptprogramm ─────────────────────────────────────────────────────────────
