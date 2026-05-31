@@ -634,8 +634,9 @@ def main():
     print("2/4  Hintergrund laden + Karten erstellen …")
     day_of_year = datetime.now().timetuple().tm_yday
     use_clean   = (day_of_year % 2 == 1)   # täglich abwechselnd
+    palette = get_palette()
     if use_clean:
-        bg_color = WEEKDAY_PALETTES[weekday]["bg"]
+        bg_color = palette["bg"]
         bg_photo = Image.new("RGB", (W, H), bg_color)
         print(f"     Stil: Clean (einfarbig + Ornament) ✓")
     else:
@@ -644,7 +645,7 @@ def main():
             print(f"     Stil: Naturfoto geladen ✓")
         except Exception as e:
             print(f"     Foto-Download fehlgeschlagen ({e}), nutze Volltonfarbe")
-            bg_color = WEEKDAY_PALETTES[weekday]["bg"]
+            bg_color = palette["bg"]
             bg_photo = Image.new("RGB", (W, H), bg_color)
 
     total = len(slides_text)
