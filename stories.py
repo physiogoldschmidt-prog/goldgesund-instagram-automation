@@ -96,6 +96,10 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Haltung zu Selbstfürsorge: Atemmasken-Prinzip — erst sich, dann andere. Gesunder Egoismus ist keine Schwäche
 - Mama UND Träume — nicht entweder oder. Grautöne statt Schwarz-Weiß-Denken
 - Kleine Schritte, Hilfe bitten, Träume machbar machen
+- Eigene Erkenntnis: jahrelang versteckt hinter "ich rede über meine Gefühle" — aber Körper nicht mitgenommen
+- Psychologin sagte fast "Kollegin" weil sie so kognitiv war — große Lektion in Demut
+- Der Körper speichert alles — Emotionen sind Energie in Bewegung, nicht im Kopf
+- Verstehen ist wichtig (Salutogenese) — aber eben nicht allein
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich und in Entwicklung
 
 Story-Typ heute: {story_typ.upper()}
