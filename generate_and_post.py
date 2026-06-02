@@ -611,6 +611,77 @@ def send_preview_email(image_urls: list[str], caption: str,
     print(f"  Vorschau-E-Mail gesendet an {PREVIEW_EMAIL} ✓")
 
 
+# ── Wöchentliches Briefing per E-Mail ────────────────────────────────────────
+
+def send_briefing_email(briefing: str, date_str: str) -> None:
+    """Schickt das wöchentliche Briefing montags per E-Mail an Lisa."""
+    briefing_html = briefing.replace("\n", "<br>").replace("# ", "<h2>").replace("## ", "<h3>")
+
+    html = f"""<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#f4f4f0;font-family:Georgia,serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f0;padding:40px 0;">
+    <tr><td align="center">
+      <table width="620" cellpadding="0" cellspacing="0"
+             style="background:#FAFAF7;border-radius:8px;overflow:hidden;
+                    box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#FAFAF7;padding:32px 40px 16px;text-align:center;
+                     border-bottom:2px solid #C8963E;">
+            <p style="margin:0;font-size:13px;color:#888;letter-spacing:2px;
+                      text-transform:uppercase;">Wöchentliches Briefing</p>
+            <h1 style="margin:8px 0 0;font-size:36px;color:#C8963E;font-weight:normal;
+                       font-family:'Palatino Linotype',Palatino,serif;
+                       font-style:italic;">goldgesund</h1>
+            <p style="margin:4px 0 0;font-size:13px;color:#999;">{date_str}</p>
+          </td>
+        </tr>
+
+        <!-- Briefing-Inhalt -->
+        <tr>
+          <td style="padding:32px 40px;font-size:15px;line-height:1.8;color:#2C2C2A;">
+            {briefing_html}
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:16px 40px 28px;text-align:center;
+                     border-top:1px solid #e8e5de;">
+            <p style="margin:0;font-size:12px;color:#bbb;">
+              GOLDGESUND · Lisa Goldschmidt · Heilpraktikerin Berlin
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+    payload = {
+        "sender": {"name": "GOLDGESUND", "email": "physiogoldschmidt@gmail.com"},
+        "to": [{"email": PREVIEW_EMAIL, "name": "Lisa"}],
+        "subject": f"🌿 GOLDGESUND Wöchentliches Briefing — {date_str}",
+        "htmlContent": html,
+    }
+    r = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+        json=payload,
+        timeout=20,
+    )
+    r.raise_for_status()
+    print(f"  Briefing-E-Mail gesendet an {PREVIEW_EMAIL} ✓")
+
+
 # ── Hauptprogramm ─────────────────────────────────────────────────────────────
 
 def main():
@@ -624,6 +695,15 @@ def main():
     post_type   = "carousel" if is_carousel else "single"
     day_names   = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
     print(f"GOLDGESUND Instagram — {date_str} ({day_names[weekday]}, {post_type.upper()})")
+
+    # Montags: Briefing per E-Mail verschicken
+    if weekday == 0:
+        print("0/4  Montags-Briefing wird per E-Mail verschickt …")
+        briefing_raw = get_latest_briefing()
+        if briefing_raw:
+            send_briefing_email(briefing_raw, date_str)
+        else:
+            print("     Kein Briefing gefunden — E-Mail übersprungen")
 
     print(f"1/4  Content wird generiert ({post_type}, inkl. Briefing-Recherche) …")
     slides_text, caption = generate_content()
