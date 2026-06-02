@@ -88,6 +88,9 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Natur ist ihr Anker: zwei Hunde, barfuß laufen, Waldspaziergänge
 - Liebt Fortbildungen leidenschaftlich — "dafür stehe ich Sonntagmorgen auf"
 - Singt gerne, hört Musik mit vollem Fokus — durch Retreat wiederentdeckt
+- Kaffee-Junkie mit Lieblingstassen aus dem Urlaub — entkoffeiniert mit Kokosmilch ist ihr Highlight des Jahres
+- Summt beim Essen wenn es ihr schmeckt — Genuss und Süßes sind ihr wichtig
+- Feiert kleine Dinge bewusst und mit Freude
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich und in Entwicklung
 
 Story-Typ heute: {story_typ.upper()}
