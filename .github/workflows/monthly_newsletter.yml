@@ -1,0 +1,38 @@
+name: Monatlicher GOLDGESUND Newsletter
+
+on:
+  schedule:
+    # Jeden ersten Montag im Monat um 09:00 Uhr MESZ
+    # (1.–7. des Monats, wenn Montag)
+    - cron: "0 7 1-7 * 1"
+  workflow_dispatch:
+    inputs:
+      modus:
+        description: 'preview = Vorschau an Lisa | send = echten Versand auslösen'
+        required: false
+        default: 'preview'
+
+permissions:
+  contents: write
+
+jobs:
+  newsletter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Abhängigkeiten installieren
+        run: pip install -r requirements.txt
+
+      - name: Newsletter erstellen und senden
+        env:
+          ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN:       ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY:  ${{ github.repository }}
+          BREVO_API_KEY:      ${{ secrets.BREVO_API_KEY }}
+          NEWSLETTER_MODE:    ${{ github.event.inputs.modus || 'preview' }}
+        run: python newsletter.py

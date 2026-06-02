@@ -1,0 +1,33 @@
+name: Tägliche GOLDGESUND Story
+
+on:
+  schedule:
+    # Jeden Tag um 08:30 Uhr MESZ (= 06:30 UTC Sommer)
+    - cron: "30 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  story:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Abhängigkeiten installieren
+        run: pip install -r requirements.txt
+
+      - name: Story erstellen und Vorschau senden
+        env:
+          ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN:       ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY:  ${{ github.repository }}
+          BREVO_API_KEY:      ${{ secrets.BREVO_API_KEY }}
+          MAKE_STORY_WEBHOOK: ${{ secrets.MAKE_STORY_WEBHOOK }}
+          PEXELS_API_KEY:     ${{ secrets.PEXELS_API_KEY }}
+        run: python stories.py

@@ -1,0 +1,31 @@
+name: Wöchentlicher GOLDGESUND Blog-Artikel
+
+on:
+  schedule:
+    # Jeden Donnerstag um 09:00 Uhr MESZ (= 07:00 UTC Sommer)
+    - cron: "0 7 * * 4"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  blog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Abhängigkeiten installieren
+        run: pip install -r requirements.txt
+
+      - name: Blog-Artikel generieren und senden
+        env:
+          ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN:       ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY:  ${{ github.repository }}
+          BREVO_API_KEY:      ${{ secrets.BREVO_API_KEY }}
+        run: python blog.py
