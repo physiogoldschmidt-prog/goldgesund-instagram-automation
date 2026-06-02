@@ -84,6 +84,10 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Tiefer Wunsch eine gute Mutter zu sein und eigene Schattenthemen nicht weiterzugeben
 - Sinnsuche — Sinn in der Arbeit und im Leben finden beschäftigt sie sehr
 - Sie lebt selbst was sie lehrt — das ist ihre Stärke und Glaubwürdigkeit
+- Rituale: Kerze, Duftöle, Raum reinigen, Rassel, Meditation vor Behandlungen — das ist ihr echtes Leben
+- Natur ist ihr Anker: zwei Hunde, barfuß laufen, Waldspaziergänge
+- Liebt Fortbildungen leidenschaftlich — "dafür stehe ich Sonntagmorgen auf"
+- Singt gerne, hört Musik mit vollem Fokus — durch Retreat wiederentdeckt
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich und in Entwicklung
 
 Story-Typ heute: {story_typ.upper()}
