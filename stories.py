@@ -80,7 +80,11 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Was sie in der Praxis erlebt: trotz Internet wissen viele Menschen erstaunlich wenig über ihren Körper
 - Das eigentliche Problem ist nicht fehlendes Wissen sondern die Integration ins echte Leben
 - Mythen die sie täglich begegnen: "gerader Rücken ist gesund", "Psyche beeinflusst nicht Hormone", "ausgewogene Ernährung reicht"
-- Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich
+- Persönlich: eigener Heilungsweg mit psychosomatischen Beschwerden — Annehmen und Loslassen sind ihre tägliche Praxis
+- Tiefer Wunsch eine gute Mutter zu sein und eigene Schattenthemen nicht weiterzugeben
+- Sinnsuche — Sinn in der Arbeit und im Leben finden beschäftigt sie sehr
+- Sie lebt selbst was sie lehrt — das ist ihre Stärke und Glaubwürdigkeit
+- Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich und in Entwicklung
 
 Story-Typ heute: {story_typ.upper()}
 Kontext: {themen[story_typ]}
