@@ -93,6 +93,9 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Feiert kleine Dinge bewusst und mit Freude
 - Berührende Momente aus der Praxis: Patientin deren Tinnitus kurz verschwand ("Wie wunderbar — das zeigt dass es wandelbar ist"); junge Mutter die nach Herzatmung weinte weil ihr Kopf endlich still war
 - Diese Momente sind ihr Warum
+- Haltung zu Selbstfürsorge: Atemmasken-Prinzip — erst sich, dann andere. Gesunder Egoismus ist keine Schwäche
+- Mama UND Träume — nicht entweder oder. Grautöne statt Schwarz-Weiß-Denken
+- Kleine Schritte, Hilfe bitten, Träume machbar machen
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich und in Entwicklung
 
 Story-Typ heute: {story_typ.upper()}
