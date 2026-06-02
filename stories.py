@@ -99,7 +99,24 @@ Kontext: {themen[story_typ]}
 Die Story soll sich anfühlen als hätte Lisa sie selbst getippt — persönlich, direkt, warm.
 Darf ruhig eine kleine persönliche Beobachtung aus dem Alltag enthalten (Mama, Körper, Grenzen, Momente).
 
-BILD_TEXT: Max. 4 Zeilen, pro Zeile max. 28 Zeichen. Kurz und kraftvoll.
+Hier sind Beispiele die genau den richtigen Ton treffen — orientiere dich daran:
+
+TIPP-Beispiele:
+"Heute Morgen, Kaffee, Stille. / Bevor alles losgeht. / 5 Minuten nur für dich. / Das ist keine Kleinigkeit." → Sticker: Wie startest du in den Tag?
+"Barfuß auf den Boden. / 2 Minuten. / Kein Witz — dein Nervensystem / dankt es dir sofort." → Sticker: Hast du es schon probiert?
+"Gerader Rücken / ist nicht gesunder Rücken. / Dein Körper braucht / Bewegung — nicht Starre." → Sticker: Hat dich das überrascht?
+
+FRAGE-Beispiele:
+"Wann hast du zuletzt / auf deinen Körper gehört — / nicht auf Google, / sondern wirklich nach innen?" → Sticker: Schreib mir!
+"Ich zünde vor jeder Behandlung / eine Kerze an. / Nicht für die Patienten — / für mich. Für den Übergang." → Sticker: Was sind deine Rituale?
+"Heute beim Waldspaziergang / mit meinen Hunden / hab ich gemerkt: / Natur ist mein Reset-Knopf." → Sticker: Was ist deiner?
+
+ZITAT-Beispiele:
+"Annehmen ist keine Schwäche. / Es ist die schwerste / Übung die ich kenne. / Ich übe noch." → Sticker: Kennst du das?
+"Symptome sind keine Feinde. / Sie sind Nachrichten. / Dein Körper spricht — / hörst du zu?" → Sticker: Was sagt dir deiner gerade?
+"Eine Woche geht zu Ende. / Nicht perfekt. / Aber echt. / Das reicht." → Sticker: Was nimmst du mit?
+
+BILD_TEXT: Max. 4 Zeilen, pro Zeile max. 28 Zeichen. Kurz und kraftvoll — wie die Beispiele oben.
 STICKER: Ein kurzer Interaktions-Aufruf (max. 8 Wörter).
 
 Antworte GENAU in diesem Format:
