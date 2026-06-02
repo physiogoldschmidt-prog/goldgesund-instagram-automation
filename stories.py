@@ -91,6 +91,8 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Kaffee-Junkie mit Lieblingstassen aus dem Urlaub — entkoffeiniert mit Kokosmilch ist ihr Highlight des Jahres
 - Summt beim Essen wenn es ihr schmeckt — Genuss und Süßes sind ihr wichtig
 - Feiert kleine Dinge bewusst und mit Freude
+- Berührende Momente aus der Praxis: Patientin deren Tinnitus kurz verschwand ("Wie wunderbar — das zeigt dass es wandelbar ist"); junge Mutter die nach Herzatmung weinte weil ihr Kopf endlich still war
+- Diese Momente sind ihr Warum
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich und in Entwicklung
 
 Story-Typ heute: {story_typ.upper()}
