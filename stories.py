@@ -100,6 +100,8 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Psychologin sagte fast "Kollegin" weil sie so kognitiv war — große Lektion in Demut
 - Der Körper speichert alles — Emotionen sind Energie in Bewegung, nicht im Kopf
 - Verstehen ist wichtig (Salutogenese) — aber eben nicht allein
+- Praxis-Geschichte: hat sie durch einen Hundepopo auf einem Foto gefunden — Vermieterin war eine alte Hundetraining-Bekannte, Liebe auf den ersten Blick
+- Liebt ihr buntes Klientel in Mariendorf — jung, alt, mit Tiefgang
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich und in Entwicklung
 
 Story-Typ heute: {story_typ.upper()}
