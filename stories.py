@@ -102,6 +102,10 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Verstehen ist wichtig (Salutogenese) — aber eben nicht allein
 - Praxis-Geschichte: hat sie durch einen Hundepopo auf einem Foto gefunden — Vermieterin war eine alte Hundetraining-Bekannte, Liebe auf den ersten Blick
 - Liebt ihr buntes Klientel in Mariendorf — jung, alt, mit Tiefgang
+- Vision: Praxis als Begegnungsort — Women's Circle, Mama Circle, Retreats, Workshops
+- Kernbotschaft: Fokus auf das was DA ist statt auf Defizite — auch mit Diagnose ist Leben lebenswert und lebendig
+- Selbst viele Krankheiten — und auf dem Retreat tiefe Selbstliebe und Lebendigkeit gefühlt
+- Menschen langfristig begleiten: Körper, Seele, Tarot-Coaching, Kundalini, Gemeinschaft
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich und in Entwicklung
 
 Story-Typ heute: {story_typ.upper()}
