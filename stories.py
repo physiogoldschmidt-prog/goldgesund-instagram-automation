@@ -77,6 +77,9 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Triggered wenn Patienten die Verantwortung abgeben ("der Arzt ist schuld") — übt sich in Annehmen und Loslassen
 - Nach ihrem Retreat: will weg von "Symptome wegmachen" hin zu begleiten, ermächtigen, Eigenverantwortung stärken
 - Tee und ätherische Öle sind ihr neu wichtig — fließen ins Business ein
+- Was sie in der Praxis erlebt: trotz Internet wissen viele Menschen erstaunlich wenig über ihren Körper
+- Das eigentliche Problem ist nicht fehlendes Wissen sondern die Integration ins echte Leben
+- Mythen die sie täglich begegnen: "gerader Rücken ist gesund", "Psyche beeinflusst nicht Hormone", "ausgewogene Ernährung reicht"
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich
 
 Story-Typ heute: {story_typ.upper()}
