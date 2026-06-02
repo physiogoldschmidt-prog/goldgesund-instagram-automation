@@ -1,0 +1,29 @@
+name: Wöchentliche GOLDGESUND Konkurrenz-Analyse
+
+on:
+  schedule:
+    # Jeden Montag um 09:30 Uhr MESZ (= 07:30 UTC Sommer)
+    - cron: "30 7 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  analyse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Abhängigkeiten installieren
+        run: pip install -r requirements.txt
+
+      - name: Konkurrenz-Analyse durchführen und senden
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BREVO_API_KEY:     ${{ secrets.BREVO_API_KEY }}
+        run: python competitor_analysis.py
