@@ -51,8 +51,14 @@ def generate_story_content() -> tuple[str, str, str]:
     """Gibt (story_typ, bild_text, sticker_frage) zurück."""
     client  = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     weekday = datetime.now().weekday()
-    day_of_year = datetime.now().timetuple().tm_yday
-    story_typ = STORY_TYPES[day_of_year % 3]
+    hour = datetime.now().hour
+    # Morgens (< 10 Uhr) → Tipp, Mittags (10–15 Uhr) → Frage, Abends (≥ 16 Uhr) → Zitat
+    if hour < 10:
+        story_typ = "tipp"
+    elif hour < 16:
+        story_typ = "frage"
+    else:
+        story_typ = "zitat"
 
     themen = {
         "frage": "Eine kurze, persönliche Frage die zum Nachdenken anregt — z.B. über den Körper, Stress, Wohlbefinden. Etwas das Follower gerne beantworten.",

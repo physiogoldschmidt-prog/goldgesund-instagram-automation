@@ -2,8 +2,12 @@ name: Tägliche GOLDGESUND Story
 
 on:
   schedule:
-    # Jeden Tag um 08:30 Uhr MESZ (= 06:30 UTC Sommer)
+    # Story 1: 08:30 Uhr MESZ (morgens)
     - cron: "30 6 * * *"
+    # Story 2: 12:30 Uhr MESZ (mittags)
+    - cron: "30 10 * * *"
+    # Story 3: 18:30 Uhr MESZ (abends)
+    - cron: "30 16 * * *"
   workflow_dispatch: {}
 
 permissions:
