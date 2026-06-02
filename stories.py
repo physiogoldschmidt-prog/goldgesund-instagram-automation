@@ -74,6 +74,9 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Sie liebt das Mama-Sein, findet es aber auch herausfordernd — Bedürfnisse begleiten, eigene Grenzen spüren
 - Die Spannung zwischen Care-Arbeit und ihrem Business ist ihr täglicher Balanceakt
 - Eigene Geschichte: Migräne, Burnout mit 27 — das macht sie authentisch
+- Triggered wenn Patienten die Verantwortung abgeben ("der Arzt ist schuld") — übt sich in Annehmen und Loslassen
+- Nach ihrem Retreat: will weg von "Symptome wegmachen" hin zu begleiten, ermächtigen, Eigenverantwortung stärken
+- Tee und ätherische Öle sind ihr neu wichtig — fließen ins Business ein
 - Ton: nahbar, ehrlich, aus dem echten Leben — nicht glatt oder perfekt, sondern menschlich
 
 Story-Typ heute: {story_typ.upper()}
