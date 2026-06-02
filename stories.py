@@ -5,19 +5,17 @@ import time
 import requests
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from urllib.parse import urlencode
 
 import anthropic
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 
-ANTHROPIC_API_KEY     = os.environ["ANTHROPIC_API_KEY"]
-GITHUB_TOKEN          = os.environ["GITHUB_TOKEN"]
-GITHUB_REPO           = os.environ["GITHUB_REPOSITORY"]
-BREVO_API_KEY         = os.environ["BREVO_API_KEY"]
-MAKE_STORY_WEBHOOK    = os.environ["MAKE_STORY_WEBHOOK"]
-PEXELS_API_KEY        = os.environ["PEXELS_API_KEY"]
-PREVIEW_EMAIL         = "physiogoldschmidt@gmail.com"
+ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
+GITHUB_TOKEN      = os.environ["GITHUB_TOKEN"]
+GITHUB_REPO       = os.environ["GITHUB_REPOSITORY"]
+BREVO_API_KEY     = os.environ["BREVO_API_KEY"]
+PEXELS_API_KEY    = os.environ["PEXELS_API_KEY"]
+PREVIEW_EMAIL     = "physiogoldschmidt@gmail.com"
 
 W, H = 1080, 1920   # Story-Format (9:16)
 
@@ -212,9 +210,6 @@ def upload_story(img: Image.Image, date_str: str) -> str:
 
 
 def send_story_email(image_url: str, sticker: str, story_typ: str, date_str: str) -> None:
-    params       = {"post_type": "story", "image_url_1": image_url, "caption": sticker}
-    approval_url = f"{MAKE_STORY_WEBHOOK}?{urlencode(params)}"
-
     html = f"""<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"></head>
@@ -243,15 +238,13 @@ def send_story_email(image_url: str, sticker: str, story_typ: str, date_str: str
           </td>
         </tr>
         <tr>
-          <td style="padding:32px 40px;text-align:center;">
-            <a href="{approval_url}"
-               style="display:inline-block;background:#1D9E75;color:#fff;
-                      text-decoration:none;font-size:16px;font-weight:bold;
-                      padding:14px 44px;border-radius:4px;">
-              ✅ &nbsp; Als Story veröffentlichen
-            </a>
-            <p style="margin:14px 0 0;font-size:12px;color:#aaa;">
-              Wenn du nichts tust, wird keine Story gepostet.
+          <td style="padding:28px 40px;background:#f8f6f0;border-top:1px solid #e8e5de;">
+            <p style="margin:0;font-size:13px;color:#555;line-height:1.7;">
+              <strong>So postest du die Story:</strong><br>
+              1. Drück lange auf das Bild oben → <em>Bild sichern</em><br>
+              2. Öffne Instagram auf deinem Handy<br>
+              3. Tippe auf dein Profilbild (+ für neue Story)<br>
+              4. Wähle das gespeicherte Bild aus und poste ✓
             </p>
           </td>
         </tr>
