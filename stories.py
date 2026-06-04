@@ -362,14 +362,6 @@ def main():
     print("4/4  E-Mail mit allen 3 Stories wird gesendet …")
     send_stories_email(stories, date_str)
     print("✓ Fertig!")
-    print("     Bild erstellt ✓")
-
-    print("3/3  Bild hochladen + E-Mail senden …")
-    image_url = upload_story(img, date_str)
-    time.sleep(3)
-    send_story_email(image_url, sticker, story_typ, date_str)
-
-    print("✓ Fertig! Lisa erhält die Story-Vorschau per E-Mail.")
 
 
 if __name__ == "__main__":
