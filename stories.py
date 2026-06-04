@@ -47,18 +47,10 @@ ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 # ── Content-Generierung ────────────────────────────────────────────────────────
 
-def generate_story_content() -> tuple[str, str, str]:
-    """Gibt (story_typ, bild_text, sticker_frage) zurück."""
+def generate_story_content(story_typ: str) -> tuple[str, str, str]:
+    """Gibt (story_typ, bild_text, sticker) zurück."""
     client  = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     weekday = datetime.now().weekday()
-    hour = datetime.now().hour
-    # Morgens (< 10 Uhr) → Tipp, Mittags (10–15 Uhr) → Frage, Abends (≥ 16 Uhr) → Zitat
-    if hour < 10:
-        story_typ = "tipp"
-    elif hour < 16:
-        story_typ = "frage"
-    else:
-        story_typ = "zitat"
 
     themen = {
         "frage": "Eine kurze, persönliche Frage die zum Nachdenken anregt — z.B. über den Körper, Stress, Wohlbefinden. Etwas das Follower gerne beantworten.",
@@ -266,50 +258,58 @@ def upload_to_github(content_b64: str, filename: str, commit_msg: str) -> str:
     return f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{filename}"
 
 
-def upload_story(img: Image.Image, date_str: str) -> str:
+def upload_story(img: Image.Image, date_str: str, nummer: int) -> str:
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=95)
     content  = base64.b64encode(buf.getvalue()).decode()
-    filename = f"posts/story_{date_str}.jpg"
-    return upload_to_github(content, filename, f"Story {date_str}")
+    filename = f"posts/story_{date_str}_{nummer}.jpg"
+    return upload_to_github(content, filename, f"Story {date_str} #{nummer}")
 
 
-def send_story_email(image_url: str, sticker: str, story_typ: str, date_str: str) -> None:
+def send_stories_email(stories: list[dict], date_str: str) -> None:
+    """Schickt alle 3 Stories des Tages in einer einzigen E-Mail."""
+    typen_label = {"tipp": "🌿 Tipp für dich", "frage": "💬 Frage des Tages", "zitat": "✨ Gedanke"}
+
+    karten_html = ""
+    for s in stories:
+        label = typen_label.get(s["typ"], s["typ"])
+        karten_html += f"""
+        <tr>
+          <td style="padding:24px 40px;border-bottom:1px solid #e8e5de;text-align:center;">
+            <p style="margin:0 0 8px;font-size:12px;color:#C8963E;letter-spacing:2px;text-transform:uppercase;font-weight:bold;">{label}</p>
+            <img src="{s['url']}" width="220" alt="Story"
+                 style="width:220px;border-radius:12px;border:1px solid #e0ddd5;display:block;margin:0 auto;">
+            <p style="margin:12px 0 0;font-size:13px;color:#555;">
+              <strong>Sticker:</strong> {s['sticker']}
+            </p>
+          </td>
+        </tr>"""
+
     html = f"""<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f0;font-family:Georgia,serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f0;padding:40px 0;">
     <tr><td align="center">
-      <table width="500" cellpadding="0" cellspacing="0"
+      <table width="540" cellpadding="0" cellspacing="0"
              style="background:#FAFAF7;border-radius:8px;overflow:hidden;
                     box-shadow:0 2px 12px rgba(0,0,0,0.08);">
         <tr>
           <td style="padding:28px 40px 16px;text-align:center;border-bottom:2px solid #C8963E;">
-            <p style="margin:0;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">
-              Instagram Story · {story_typ.capitalize()}
-            </p>
+            <p style="margin:0;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">Deine 3 Stories für heute</p>
             <h1 style="margin:8px 0 0;font-size:32px;color:#C8963E;font-weight:normal;font-style:italic;">goldgesund</h1>
             <p style="margin:4px 0 0;font-size:13px;color:#999;">{date_str}</p>
           </td>
         </tr>
+        {karten_html}
         <tr>
-          <td style="padding:28px 40px 0;text-align:center;">
-            <img src="{image_url}" width="240" alt="Story Vorschau"
-                 style="width:240px;border-radius:12px;border:1px solid #e0ddd5;">
-            <p style="margin:16px 0 0;font-size:14px;color:#555;">
-              <strong>Sticker-Text:</strong> {sticker}
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:28px 40px;background:#f8f6f0;border-top:1px solid #e8e5de;">
+          <td style="padding:24px 40px;background:#f8f6f0;">
             <p style="margin:0;font-size:13px;color:#555;line-height:1.7;">
-              <strong>So postest du die Story:</strong><br>
-              1. Drück lange auf das Bild oben → <em>Bild sichern</em><br>
-              2. Öffne Instagram auf deinem Handy<br>
-              3. Tippe auf dein Profilbild (+ für neue Story)<br>
-              4. Wähle das gespeicherte Bild aus und poste ✓
+              <strong>So postest du die Stories:</strong><br>
+              1. Drück lange auf ein Bild → <em>Bild sichern</em><br>
+              2. Öffne Instagram → tippe auf dein Profilbild<br>
+              3. Bild auswählen und als Story posten ✓<br>
+              4. Dasselbe Bild auch als WhatsApp Status nutzen 📱
             </p>
           </td>
         </tr>
@@ -327,31 +327,41 @@ def send_story_email(image_url: str, sticker: str, story_typ: str, date_str: str
     payload = {
         "sender": {"name": "GOLDGESUND", "email": "physiogoldschmidt@gmail.com"},
         "to": [{"email": PREVIEW_EMAIL, "name": "Lisa"}],
-        "subject": f"📱 Instagram Story {date_str} — bitte freigeben",
+        "subject": f"📱 Deine 3 Stories für {date_str}",
         "htmlContent": html,
     }
     r = requests.post(
         "https://api.brevo.com/v3/smtp/email",
         headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
-        json=payload,
-        timeout=20,
+        json=payload, timeout=20,
     )
     r.raise_for_status()
-    print(f"  Story-Vorschau-E-Mail gesendet ✓")
+    print(f"  Alle 3 Stories per E-Mail gesendet ✓")
 
 
 # ── Hauptprogramm ──────────────────────────────────────────────────────────────
 
 def main():
-    date_str  = datetime.now().strftime("%Y-%m-%d")
-    print(f"GOLDGESUND Story — {date_str}")
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    print(f"GOLDGESUND Stories — {date_str} (alle 3 auf einmal)")
 
-    print("1/3  Story-Content wird generiert …")
-    story_typ, bild_text, sticker = generate_story_content()
-    print(f"     Typ: {story_typ} | Text: {bild_text!r}")
+    typen = ["tipp", "frage", "zitat"]
+    stories = []
 
-    print("2/3  Story-Bild wird erstellt …")
-    img = create_story_image(bild_text, story_typ, sticker)
+    for i, story_typ in enumerate(typen, 1):
+        print(f"{i}/3  Story '{story_typ}' wird generiert …")
+        _, bild_text, sticker = generate_story_content(story_typ)
+        print(f"     Text: {bild_text!r}")
+
+        img = create_story_image(bild_text, story_typ, sticker)
+        url = upload_story(img, date_str, i)
+        time.sleep(2)
+        stories.append({"typ": story_typ, "url": url, "sticker": sticker})
+        print(f"     Hochgeladen ✓")
+
+    print("4/4  E-Mail mit allen 3 Stories wird gesendet …")
+    send_stories_email(stories, date_str)
+    print("✓ Fertig!")
     print("     Bild erstellt ✓")
 
     print("3/3  Bild hochladen + E-Mail senden …")
