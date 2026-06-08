@@ -1,9 +1,9 @@
-name: Wöchentlicher GOLDGESUND Blog-Artikel
+name: Monatlicher GOLDGESUND Blog-Artikel
 
 on:
   schedule:
-    # Jeden Donnerstag um 09:00 Uhr MESZ (= 07:00 UTC Sommer)
-    - cron: "0 7 * * 4"
+    # Ersten Donnerstag im Monat um 09:00 Uhr MESZ (= 07:00 UTC Sommer)
+    - cron: "0 7 1-7 * 4"
   workflow_dispatch: {}
 
 permissions:

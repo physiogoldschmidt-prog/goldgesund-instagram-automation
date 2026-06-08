@@ -61,10 +61,6 @@ def generate_story_content(story_typ: str) -> tuple[str, str, str]:
     prompt = f"""Du schreibst Instagram Stories für Lisa Goldschmidt (GOLDGESUND, Heilpraktikerin, Osteopathie & Psychosomatik, Berlin).
 
 Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
-- Mama eines kleinen Sohnes der sehr auf sie bezogen ist — viel Care-Arbeit, viel Herz
-- Ihr Sohn lehrt sie täglich Achtsamkeit und den Fokus auf den Moment
-- Sie liebt das Mama-Sein, findet es aber auch herausfordernd — Bedürfnisse begleiten, eigene Grenzen spüren
-- Die Spannung zwischen Care-Arbeit und ihrem Business ist ihr täglicher Balanceakt
 - Eigene Geschichte: Migräne, Burnout mit 27 — das macht sie authentisch
 - Triggered wenn Patienten die Verantwortung abgeben ("der Arzt ist schuld") — übt sich in Annehmen und Loslassen
 - Nach ihrem Retreat: will weg von "Symptome wegmachen" hin zu begleiten, ermächtigen, Eigenverantwortung stärken
@@ -73,7 +69,7 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Das eigentliche Problem ist nicht fehlendes Wissen sondern die Integration ins echte Leben
 - Mythen die sie täglich begegnen: "gerader Rücken ist gesund", "Psyche beeinflusst nicht Hormone", "ausgewogene Ernährung reicht"
 - Persönlich: eigener Heilungsweg mit psychosomatischen Beschwerden — Annehmen und Loslassen sind ihre tägliche Praxis
-- Tiefer Wunsch eine gute Mutter zu sein und eigene Schattenthemen nicht weiterzugeben
+- Tiefer Wunsch authentisch zu leben und eigene Schattenthemen zu integrieren
 - Sinnsuche — Sinn in der Arbeit und im Leben finden beschäftigt sie sehr
 - Sie lebt selbst was sie lehrt — das ist ihre Stärke und Glaubwürdigkeit
 - Rituale: Kerze, Duftöle, Raum reinigen, Rassel, Meditation vor Behandlungen — das ist ihr echtes Leben
@@ -86,7 +82,7 @@ Wer Lisa ist — damit die Stories wirklich nach ihr klingen:
 - Berührende Momente aus der Praxis: Patientin deren Tinnitus kurz verschwand ("Wie wunderbar — das zeigt dass es wandelbar ist"); junge Mutter die nach Herzatmung weinte weil ihr Kopf endlich still war
 - Diese Momente sind ihr Warum
 - Haltung zu Selbstfürsorge: Atemmasken-Prinzip — erst sich, dann andere. Gesunder Egoismus ist keine Schwäche
-- Mama UND Träume — nicht entweder oder. Grautöne statt Schwarz-Weiß-Denken
+- Business UND Träume — nicht entweder oder. Grautöne statt Schwarz-Weiß-Denken
 - Kleine Schritte, Hilfe bitten, Träume machbar machen
 - Eigene Erkenntnis: jahrelang versteckt hinter "ich rede über meine Gefühle" — aber Körper nicht mitgenommen
 - Psychologin sagte fast "Kollegin" weil sie so kognitiv war — große Lektion in Demut
@@ -104,7 +100,7 @@ Story-Typ heute: {story_typ.upper()}
 Kontext: {themen[story_typ]}
 
 Die Story soll sich anfühlen als hätte Lisa sie selbst getippt — persönlich, direkt, warm.
-Darf ruhig eine kleine persönliche Beobachtung aus dem Alltag enthalten (Mama, Körper, Grenzen, Momente).
+Darf ruhig eine kleine persönliche Beobachtung aus dem Alltag enthalten (Natur, Körper, Praxis-Momente, Rituale).
 
 Hier sind Beispiele die genau den richtigen Ton treffen — orientiere dich daran:
 
