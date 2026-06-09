@@ -58,6 +58,41 @@ WEEKDAY_THEMES = {
 }
 
 
+# ── Letzte Hooks laden (Wiederholungen vermeiden) ────────────────────────────
+
+def get_recent_hooks(days: int = 7) -> str:
+    """Lädt die erste Zeile (Hook) der letzten N Caption-Dateien aus posts/*.txt."""
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/posts"
+    try:
+        r = requests.get(api_url, headers=headers, timeout=10)
+        r.raise_for_status()
+        files = [f for f in r.json() if f["name"].endswith(".txt")]
+        if not files:
+            return ""
+        files.sort(key=lambda f: f["name"], reverse=True)
+        recent = files[:days]
+        hooks = []
+        for f in recent:
+            cr = requests.get(f["url"], headers=headers, timeout=10)
+            cr.raise_for_status()
+            text = base64.b64decode(cr.json()["content"]).decode("utf-8").strip()
+            first_line = text.split("\n")[0].strip()
+            if first_line:
+                hooks.append(f"- {first_line}")
+        if not hooks:
+            return ""
+        result = "\n".join(hooks)
+        print(f"     Letzte {len(hooks)} Hooks geladen (Wiederholungsschutz) ✓")
+        return result
+    except Exception as e:
+        print(f"     Hooks konnten nicht geladen werden ({e}) — wird ohne Wiederholungsschutz fortgesetzt")
+        return ""
+
+
 # ── Wöchentliches Briefing laden ─────────────────────────────────────────────
 
 def get_latest_briefing() -> str:
@@ -150,11 +185,23 @@ Aktuelle Forschungserkenntnisse aus dem wöchentlichen Briefing:
 Beziehe diese Erkenntnisse passend in den Content ein — als Inspiration, konkretes Beispiel oder aktuellen Bezug. Zitiere keine Studie namentlich, sondern integriere das Wissen natürlich.
 """
 
+    # Letzte Hooks laden — Wiederholungen vermeiden
+    recent_hooks = get_recent_hooks(7)
+    hooks_section = ""
+    if recent_hooks:
+        hooks_section = f"""
+
+WICHTIG — Diese Hooks wurden in den letzten 7 Tagen bereits verwendet. Bitte NICHT wiederholen oder ähnlich formulieren:
+{recent_hooks}
+
+Wähle eine komplett andere Perspektive, Formulierung und Einstieg.
+"""
+
     base_intro = f"""Du bist Lisa Goldschmidts Content-Assistentin für ihren Instagram-Account GOLDGESUND.
 Lisa ist Heilpraktikerin (Osteopathie, Psychosomatik) in Berlin. Ihr Ton: warm, ruhig, klar, wissenschaftlich fundiert aber alltagsnah — keine Heilungsversprechen, keine lauten Claims.
 
 Wochentag-Thema: {theme}
-Wochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas.{briefing_section}"""
+Wochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas.{briefing_section}{hooks_section}"""
 
     if is_carousel:
         prompt = base_intro + """
