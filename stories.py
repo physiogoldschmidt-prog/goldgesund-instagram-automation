@@ -47,7 +47,7 @@ ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 # ── Content-Generierung ────────────────────────────────────────────────────────
 
-def generate_story_content(story_typ: str) -> tuple[str, str, str]:
+def generate_story_content(story_typ: str, recent_texts: str = "") -> tuple[str, str, str]:
     """Gibt (story_typ, bild_text, sticker) zurück."""
     client  = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     weekday = datetime.now().weekday()
@@ -121,7 +121,18 @@ ZITAT-Beispiele:
 
 BILD_TEXT: Max. 4 Zeilen, pro Zeile max. 28 Zeichen. Kurz und kraftvoll — wie die Beispiele oben.
 STICKER: Ein kurzer Interaktions-Aufruf (max. 8 Wörter).
+"""
 
+    if recent_texts:
+        prompt += f"""
+
+WICHTIG — Diese Story-Texte wurden in den letzten 7 Tagen bereits verwendet. Bitte NICHT wiederholen oder ähnlich formulieren:
+{recent_texts}
+
+Wähle eine komplett andere Perspektive, Formulierung und Einstieg.
+"""
+
+    prompt += """
 Antworte GENAU in diesem Format:
 ===BILD_TEXT===
 Zeile 1
@@ -268,6 +279,45 @@ def upload_story(img: Image.Image, date_str: str, nummer: int) -> str:
     return upload_to_github(content, filename, f"Story {date_str} #{nummer}")
 
 
+def save_story_texts(texts: list[str], date_str: str) -> None:
+    """Speichert alle Story-Texte des Tages als .txt für den Wiederholungsschutz."""
+    combined = "\n---\n".join(texts)
+    content  = base64.b64encode(combined.encode("utf-8")).decode()
+    upload_to_github(content, f"posts/story_{date_str}.txt", f"Story-Texte {date_str}")
+
+
+def get_recent_story_texts(days: int = 7) -> str:
+    """Lädt die Story-Texte der letzten N Tage für den Wiederholungsschutz."""
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/posts"
+    try:
+        r = requests.get(api_url, headers=headers, timeout=10)
+        r.raise_for_status()
+        files = sorted(
+            [f for f in r.json() if f["name"].startswith("story_") and f["name"].endswith(".txt")],
+            key=lambda f: f["name"], reverse=True
+        )[:days]
+        all_texts = []
+        for f in files:
+            cr = requests.get(f["url"], headers=headers, timeout=10)
+            cr.raise_for_status()
+            text = base64.b64decode(cr.json()["content"]).decode("utf-8").strip()
+            for line in text.split("---"):
+                first = line.strip().split("\n")[0].strip()
+                if first:
+                    all_texts.append(f"- {first}")
+        if not all_texts:
+            return ""
+        print(f"     Letzte Story-Texte geladen (Wiederholungsschutz) ✓")
+        return "\n".join(all_texts)
+    except Exception as e:
+        print(f"     Story-Texte konnten nicht geladen werden ({e})")
+        return ""
+
+
 def send_stories_email(stories: list[dict], date_str: str) -> None:
     """Schickt alle 3 Stories des Tages in einer einzigen E-Mail."""
     typen_label = {"tipp": "🌿 Tipp für dich", "frage": "💬 Frage des Tages", "zitat": "✨ Gedanke"}
@@ -349,17 +399,23 @@ def main():
 
     typen = ["tipp", "frage", "zitat"]
     stories = []
+    recent_texts = get_recent_story_texts(7)
+    story_texts  = []
 
     for i, story_typ in enumerate(typen, 1):
         print(f"{i}/3  Story '{story_typ}' wird generiert …")
-        _, bild_text, sticker = generate_story_content(story_typ)
+        _, bild_text, sticker = generate_story_content(story_typ, recent_texts)
         print(f"     Text: {bild_text!r}")
+        story_texts.append(bild_text)
 
         img = create_story_image(bild_text, story_typ, sticker)
         url = upload_story(img, date_str, i)
         time.sleep(2)
         stories.append({"typ": story_typ, "url": url, "sticker": sticker})
         print(f"     Hochgeladen ✓")
+
+    # Story-Texte speichern für künftigen Wiederholungsschutz
+    save_story_texts(story_texts, date_str)
 
     print("4/4  E-Mail mit allen 3 Stories wird gesendet …")
     send_stories_email(stories, date_str)
