@@ -58,6 +58,47 @@ WEEKDAY_THEMES = {
 }
 
 
+# ── Aktuelles Fokusthema laden ───────────────────────────────────────────────
+
+def get_current_theme() -> str:
+    """Lädt das aktuelle 2-Wochen-Fokusthema aus themes/current_theme.txt."""
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/themes/current_theme.txt"
+    try:
+        r = requests.get(api_url, headers=headers, timeout=10)
+        r.raise_for_status()
+        text = base64.b64decode(r.json()["content"]).decode("utf-8").strip()
+        # Nur laden wenn das heutige Datum innerhalb Start–Ende liegt
+        from datetime import date
+        today = date.today()
+        start = end = None
+        for line in text.splitlines():
+            if line.startswith("Start:"):
+                try: start = date.fromisoformat(line.split(":", 1)[1].strip())
+                except: pass
+            if line.startswith("Ende:"):
+                try: end = date.fromisoformat(line.split(":", 1)[1].strip())
+                except: pass
+        if start and end and not (start <= today <= end):
+            print(f"     Fokusthema abgelaufen ({end}) — wird ignoriert")
+            return ""
+        # Thema und Beschreibung extrahieren
+        thema = beschreibung = ""
+        for line in text.splitlines():
+            if line.startswith("Thema:"): thema = line.split(":", 1)[1].strip()
+            if line.startswith("Beschreibung:"): beschreibung = line.split(":", 1)[1].strip()
+        if thema:
+            print(f"     Fokusthema: {thema} ✓")
+            return f"{thema} — {beschreibung}" if beschreibung else thema
+        return ""
+    except Exception as e:
+        print(f"     Fokusthema konnte nicht geladen werden ({e})")
+        return ""
+
+
 # ── Letzte Hooks laden (Wiederholungen vermeiden) ────────────────────────────
 
 def get_recent_hooks(days: int = 7) -> str:
@@ -173,6 +214,11 @@ def generate_content() -> tuple[list[str], str]:
     else:
         is_carousel = weekday in CAROUSEL_DAYS
 
+    # Aktuelles Fokusthema laden (überschreibt Wochentag-Thema wenn aktiv)
+    fokusthema = get_current_theme()
+    if fokusthema:
+        theme = fokusthema
+
     # Aktuelles Briefing laden
     briefing_raw        = get_latest_briefing()
     briefing_highlights = extract_briefing_highlights(briefing_raw)
@@ -197,11 +243,18 @@ WICHTIG — Diese Hooks wurden in den letzten 7 Tagen bereits verwendet. Bitte N
 Wähle eine komplett andere Perspektive, Formulierung und Einstieg.
 """
 
+    thema_zeile = (
+        f"Fokusthema der nächsten 2 Wochen: {theme}\n"
+        f"Tag {(datetime.now().date() - __import__('datetime').date(2026, 6, 10)).days + 1} des Themas — "
+        f"wähle heute einen spezifischen, noch nicht genutzten Teilaspekt dieses Themas."
+        if fokusthema else
+        f"Wochentag-Thema: {theme}\nWochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas."
+    )
+
     base_intro = f"""Du bist Lisa Goldschmidts Content-Assistentin für ihren Instagram-Account GOLDGESUND.
 Lisa ist Heilpraktikerin (Osteopathie, Psychosomatik) in Berlin. Ihr Ton: warm, ruhig, klar, wissenschaftlich fundiert aber alltagsnah — keine Heilungsversprechen, keine lauten Claims.
 
-Wochentag-Thema: {theme}
-Wochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas.{briefing_section}{hooks_section}"""
+{thema_zeile}{briefing_section}{hooks_section}"""
 
     if is_carousel:
         prompt = base_intro + """
