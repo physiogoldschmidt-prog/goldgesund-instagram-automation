@@ -528,11 +528,20 @@ def send_preview_email(image_urls: list[str], caption: str,
                        date_str: str, post_type: str = "carousel") -> None:
     """Schickt Lisa eine Vorschau-E-Mail mit allen Karten."""
 
-    # Alle Bild-URLs + Caption + post_type im Webhook-Link übergeben
-    params = {"post_type": post_type, "caption": caption}
+    # Bestätigungsseite (GitHub Pages) statt direkter Make.com-Link
+    # → verhindert automatisches Posten durch E-Mail-Scanner
+    params = {
+        "post_type": post_type,
+        "caption":   caption,
+        "wh":        MAKE_APPROVAL_WEBHOOK,
+    }
     for i, url in enumerate(image_urls, start=1):
         params[f"image_url_{i}"] = url
-    approval_url = f"{MAKE_APPROVAL_WEBHOOK}?{urlencode(params)}"
+    approval_url = (
+        "https://physiogoldschmidt-prog.github.io/"
+        "goldgesund-instagram-automation/approve.html"
+        f"?{urlencode(params)}"
+    )
 
     # Caption-Zeilenumbrüche für HTML
     caption_html = caption.replace("\n", "<br>")

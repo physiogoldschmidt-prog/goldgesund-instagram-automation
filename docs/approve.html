@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GOLDGESUND – Post freigeben</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #f5f1ea;
+      font-family: Georgia, serif;
+      color: #2C2C2A;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .card {
+      background: #FAFAF7;
+      border-radius: 12px;
+      max-width: 560px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .header {
+      background: #f5f1ea;
+      padding: 28px 32px 20px;
+      text-align: center;
+      border-bottom: 2px solid #C8963E;
+    }
+    .logo {
+      font-size: 34px;
+      color: #C8963E;
+      font-style: italic;
+      letter-spacing: 2px;
+    }
+    .tag {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #9a8070;
+      margin-top: 4px;
+    }
+    .body { padding: 32px; }
+    .label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #9a8070;
+      margin-bottom: 12px;
+    }
+    .images {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .images img {
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #e8ddd0;
+    }
+    .caption-box {
+      background: #f5f1ea;
+      border-left: 3px solid #C8963E;
+      padding: 16px 20px;
+      border-radius: 0 6px 6px 0;
+      font-size: 14px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      margin-bottom: 32px;
+      color: #2C2C2A;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      background: #1D9E75;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 18px 24px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.2s;
+    }
+    .btn:hover:not(:disabled) { background: #156b50; }
+    .btn:disabled { background: #9a9a9a; cursor: default; }
+    .status {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 15px;
+      min-height: 24px;
+    }
+    .status.ok { color: #1D9E75; font-weight: bold; }
+    .status.err { color: #c0392b; }
+    .discard {
+      display: block;
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #aaa;
+      text-decoration: none;
+    }
+    .footer {
+      padding: 16px 32px 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #bbb;
+      border-top: 1px solid #e8ddd0;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="logo">goldgesund</div>
+    <div class="tag" id="post-tag">Instagram Post</div>
+  </div>
+
+  <div class="body">
+    <div class="label" id="img-label">Bildkarte</div>
+    <div class="images" id="images"></div>
+
+    <div class="label">Caption</div>
+    <div class="caption-box" id="caption"></div>
+
+    <button class="btn" id="post-btn" onclick="doPost()">
+      ✅ &nbsp; Jetzt auf Instagram veröffentlichen
+    </button>
+    <div class="status" id="status"></div>
+    <span class="discard">Nichts tun = kein Post heute</span>
+  </div>
+
+  <div class="footer">GOLDGESUND · Lisa Goldschmidt · Heilpraktikerin Berlin</div>
+</div>
+
+<script>
+  const p = new URLSearchParams(location.search);
+  const postType = p.get('post_type') || 'single';
+  const caption  = p.get('caption')   || '';
+  const wh       = p.get('wh')        || '';
+
+  // Bilder einbauen
+  const imagesEl = document.getElementById('images');
+  const imgLabel = document.getElementById('img-label');
+  let imgCount = 0;
+  for (let i = 1; i <= 4; i++) {
+    const url = p.get('image_url_' + i);
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Karte ' + i;
+      imagesEl.appendChild(img);
+      imgCount++;
+    }
+  }
+  if (imgCount === 1) imagesEl.style.gridTemplateColumns = '1fr';
+
+  // Typ-Label
+  document.getElementById('post-tag').textContent =
+    postType === 'carousel' ? 'Carousel · ' + imgCount + ' Karten' : 'Einzelbild';
+  document.getElementById('img-label').textContent =
+    postType === 'carousel' ? 'Bildkarten' : 'Bildkarte';
+
+  // Caption
+  document.getElementById('caption').textContent = decodeURIComponent(caption);
+
+  // Button-Text
+  document.getElementById('post-btn').textContent =
+    (postType === 'carousel' ? '✅  Als Carousel auf Instagram veröffentlichen' : '✅  Jetzt auf Instagram veröffentlichen');
+
+  // Wirklich posten — erst nach echtem Klick
+  function doPost() {
+    const btn    = document.getElementById('post-btn');
+    const status = document.getElementById('status');
+    btn.disabled = true;
+    btn.textContent = '⏳  Wird gepostet …';
+    status.className = 'status';
+    status.textContent = '';
+
+    // Parameter für Make.com zusammenbauen
+    const makeParams = new URLSearchParams();
+    makeParams.set('post_type', postType);
+    makeParams.set('caption', caption);
+    for (let i = 1; i <= 4; i++) {
+      const url = p.get('image_url_' + i);
+      if (url) makeParams.set('image_url_' + i, url);
+    }
+
+    const makeUrl = decodeURIComponent(wh) + '?' + makeParams.toString();
+
+    fetch(makeUrl, { method: 'GET', mode: 'no-cors' })
+      .then(() => {
+        btn.textContent = '✅  Gepostet!';
+        status.className = 'status ok';
+        status.textContent = 'Der Post wird gleich auf Instagram veröffentlicht.';
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.textContent = '✅  Nochmal versuchen';
+        status.className = 'status err';
+        status.textContent = 'Fehler: ' + err.message;
+      });
+  }
+</script>
+</body>
+</html>
