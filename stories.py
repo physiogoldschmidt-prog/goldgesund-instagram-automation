@@ -137,8 +137,14 @@ Kurzer Interaktions-Aufruf"""
     )
     raw = message.content[0].text.strip()
 
-    bild_text = raw.split("===BILD_TEXT===")[1].split("===STICKER===")[0].strip()
-    sticker   = raw.split("===STICKER===")[1].strip()
+    try:
+        bild_text = raw.split("===BILD_TEXT===")[1].split("===STICKER===")[0].strip()
+        sticker   = raw.split("===STICKER===")[1].strip()
+    except IndexError:
+        # Fallback: gesamten Text als Bild-Text verwenden
+        lines = [l.strip() for l in raw.splitlines() if l.strip() and not l.startswith("===")]
+        bild_text = "\n".join(lines[:4]) if lines else "Dein Körper\nweiß den Weg."
+        sticker   = "Was denkst du?"
     return story_typ, bild_text, sticker
 
 
