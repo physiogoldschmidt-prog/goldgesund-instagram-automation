@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goldgesund – Vagus Nerv Instagram Post</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #2a2a2a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    font-family: 'Georgia', serif;
+    padding: 40px 20px;
+    gap: 40px;
+  }
+
+  h2 {
+    color: #FDFAF4;
+    font-family: Georgia, serif;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+
+  /* POST CONTAINER – 1080x1350 aspect ratio (4:5) */
+  .post {
+    width: 540px;
+    height: 675px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  /* === POST 1: Hauptpost === */
+  .post-1 {
+    background: #FDFAF4;
+  }
+
+  .post-1 .bg-nerve {
+    position: absolute;
+    top: 0; right: 0;
+    width: 100%; height: 100%;
+    opacity: 0.06;
+  }
+
+  .post-1 .gold-bar {
+    position: absolute;
+    left: 0; top: 0;
+    width: 5px; height: 100%;
+    background: linear-gradient(180deg, #C9A84C 0%, #e8c96a 50%, #C9A84C 100%);
+  }
+
+  .post-1 .content {
+    position: relative;
+    z-index: 2;
+    padding: 52px 52px 44px 64px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .post-1 .eyebrow {
+    font-family: Georgia, serif;
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #C9A84C;
+    font-style: italic;
+  }
+
+  .post-1 .headline {
+    font-family: Georgia, serif;
+    font-size: 40px;
+    line-height: 1.15;
+    color: #1c2a1e;
+    font-weight: 400;
+    margin-top: 18px;
+  }
+
+  .post-1 .headline em {
+    font-style: italic;
+    color: #C9A84C;
+  }
+
+  .post-1 .subline {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #4a5c4d;
+    margin-top: 22px;
+    max-width: 380px;
+    font-weight: 300;
+  }
+
+  .post-1 .nerve-visual {
+    margin-top: 32px;
+    position: relative;
+    height: 80px;
+  }
+
+  .post-1 .nerve-visual svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .post-1 .facts-row {
+    display: flex;
+    gap: 32px;
+    margin-top: 28px;
+  }
+
+  .post-1 .fact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .post-1 .fact-number {
+    font-family: Georgia, serif;
+    font-size: 26px;
+    color: #C9A84C;
+    font-style: italic;
+  }
+
+  .post-1 .fact-label {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10px;
+    color: #4a5c4d;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    line-height: 1.4;
+  }
+
+  .post-1 .divider {
+    width: 40px;
+    height: 1px;
+    background: #C9A84C;
+    opacity: 0.4;
+    margin-top: 28px;
+  }
+
+  .post-1 .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .post-1 .brand {
+    font-family: Georgia, serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #1c2a1e;
+    opacity: 0.4;
+  }
+
+  .post-1 .cta {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #C9A84C;
+    border-bottom: 1px solid #C9A84C;
+    padding-bottom: 2px;
+  }
+
+  /* === POST 2: Karussell Seite === */
+  .post-2 {
+    background: #1c2a1e;
+  }
+
+  .post-2 .content {
+    position: relative;
+    z-index: 2;
+    padding: 52px 52px 44px 52px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .post-2 .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .post-2 .page-num {
+    font-family: Georgia, serif;
+    font-size: 11px;
+    color: #C9A84C;
+    opacity: 0.6;
+    letter-spacing: 2px;
+  }
+
+  .post-2 .tag {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #FDFAF4;
+    opacity: 0.3;
+  }
+
+  .post-2 .big-q {
+    font-family: Georgia, serif;
+    font-size: 72px;
+    color: #C9A84C;
+    opacity: 0.15;
+    line-height: 1;
+    margin-bottom: -20px;
+  }
+
+  .post-2 .question {
+    font-family: Georgia, serif;
+    font-size: 28px;
+    line-height: 1.3;
+    color: #FDFAF4;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .post-2 .answer {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: #a8b8a0;
+    margin-top: 24px;
+    font-weight: 300;
+  }
+
+  .post-2 .answer strong {
+    color: #C9A84C;
+    font-weight: 400;
+  }
+
+  .post-2 .gold-dot-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 36px;
+  }
+
+  .post-2 .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #C9A84C;
+    opacity: 0.3;
+  }
+
+  .post-2 .dot.active {
+    opacity: 1;
+    width: 20px;
+    border-radius: 3px;
+  }
+
+  .post-2 .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .post-2 .brand {
+    font-family: Georgia, serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #FDFAF4;
+    opacity: 0.2;
+  }
+
+  /* === POST 3: Story-Format === */
+  .post-3 {
+    width: 540px;
+    height: 675px;
+    background: linear-gradient(160deg, #1c2a1e 0%, #2d3d2f 60%, #1a1a1a 100%);
+  }
+
+  .post-3 .content {
+    padding: 52px 44px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .post-3 .circle-deco {
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 1px solid #C9A84C;
+    opacity: 0.12;
+  }
+
+  .post-3 .circle-deco-2 {
+    position: absolute;
+    bottom: 80px;
+    left: -80px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 1px solid #C9A84C;
+    opacity: 0.07;
+  }
+
+  .post-3 .eyebrow {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #C9A84C;
+  }
+
+  .post-3 .headline {
+    font-family: Georgia, serif;
+    font-size: 34px;
+    line-height: 1.2;
+    color: #FDFAF4;
+    font-weight: 400;
+    margin-top: 8px;
+  }
+
+  .post-3 .headline em {
+    color: #C9A84C;
+    font-style: italic;
+  }
+
+  .post-3 .tips {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 8px;
+  }
+
+  .post-3 .tip {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .post-3 .tip-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(201, 168, 76, 0.12);
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .post-3 .tip-text {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #a8b8a0;
+    font-weight: 300;
+  }
+
+  .post-3 .tip-text strong {
+    color: #FDFAF4;
+    font-weight: 400;
+    display: block;
+    font-size: 13px;
+    margin-bottom: 1px;
+  }
+
+  .post-3 .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .post-3 .brand {
+    font-family: Georgia, serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #FDFAF4;
+    opacity: 0.2;
+  }
+
+  .post-3 .handle {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10px;
+    color: #C9A84C;
+    opacity: 0.6;
+    letter-spacing: 1px;
+  }
+
+  .label-box {
+    background: #1c1c1c;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border-left: 3px solid #C9A84C;
+  }
+
+  .label-box p {
+    color: #a8a8a8;
+    font-size: 11px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: 1px;
+  }
+
+  .label-box span {
+    color: #FDFAF4;
+    font-size: 12px;
+    font-family: Georgia, serif;
+  }
+
+</style>
+</head>
+<body>
+
+<h2>Goldgesund · Instagram Posts · Vagus Nerv</h2>
+
+<!-- POST 1: Hauptpost / Feed -->
+<div>
+  <div class="label-box" style="margin-bottom:12px; width:540px;">
+    <p>FORMAT</p>
+    <span>Feed-Post (1080×1350) · Hauptbeitrag</span>
+  </div>
+
+  <div class="post post-1">
+    <div class="gold-bar"></div>
+
+    <!-- Background SVG nerve texture -->
+    <svg class="bg-nerve" viewBox="0 0 540 675" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 270 0 C 270 0 200 80 270 160 C 340 240 200 320 270 400 C 340 480 200 560 270 675"
+            stroke="#C9A84C" stroke-width="60" fill="none"/>
+      <path d="M 270 160 C 270 160 180 180 160 200 C 140 220 120 240 100 230"
+            stroke="#C9A84C" stroke-width="20" fill="none"/>
+      <path d="M 270 240 C 270 240 350 260 380 290 C 410 320 430 350 420 370"
+            stroke="#C9A84C" stroke-width="16" fill="none"/>
+      <path d="M 270 320 C 270 320 180 330 150 360 C 120 390 110 420 130 440"
+            stroke="#C9A84C" stroke-width="14" fill="none"/>
+      <path d="M 270 400 C 270 400 370 390 400 420 C 430 450 440 490 420 510"
+            stroke="#C9A84C" stroke-width="12" fill="none"/>
+    </svg>
+
+    <div class="content">
+      <div>
+        <div class="eyebrow">Nervensystem · Goldgesund</div>
+        <div class="headline">
+          Der Nerv,<br>der <em>alles</em><br>verbindet.
+        </div>
+        <div class="subline">
+          Dein Vagus Nerv ist die längste Nervenverbindung deines Körpers –
+          und der Schlüssel zwischen Stress, Verdauung und innerer Ruhe.
+        </div>
+      </div>
+
+      <!-- Simplified nerve illustration -->
+      <div class="nerve-visual">
+        <svg viewBox="0 0 460 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Main nerve path -->
+          <path d="M 20 40 C 60 20 100 60 140 40 C 180 20 220 60 260 40 C 300 20 340 60 380 40 C 420 20 440 35 460 40"
+                stroke="#C9A84C" stroke-width="2" opacity="0.6" fill="none"/>
+          <!-- Branch lines -->
+          <path d="M 80 32 L 60 12" stroke="#C9A84C" stroke-width="1" opacity="0.4"/>
+          <path d="M 80 32 L 65 55" stroke="#C9A84C" stroke-width="1" opacity="0.4"/>
+          <path d="M 200 52 L 185 70" stroke="#C9A84C" stroke-width="1" opacity="0.4"/>
+          <path d="M 200 52 L 218 70" stroke="#C9A84C" stroke-width="1" opacity="0.4"/>
+          <path d="M 320 32 L 305 12" stroke="#C9A84C" stroke-width="1" opacity="0.4"/>
+          <path d="M 320 32 L 338 16" stroke="#C9A84C" stroke-width="1" opacity="0.4"/>
+          <!-- Nodes -->
+          <circle cx="80" cy="32" r="3" fill="#C9A84C" opacity="0.5"/>
+          <circle cx="200" cy="52" r="3" fill="#C9A84C" opacity="0.5"/>
+          <circle cx="320" cy="32" r="3" fill="#C9A84C" opacity="0.5"/>
+          <!-- Organ labels -->
+          <text x="60" y="8" font-family="Helvetica Neue, sans-serif" font-size="7" fill="#4a5c4d" letter-spacing="1" text-anchor="middle">GEHIRN</text>
+          <text x="195" y="79" font-family="Helvetica Neue, sans-serif" font-size="7" fill="#4a5c4d" letter-spacing="1" text-anchor="middle">DARM</text>
+          <text x="328" y="10" font-family="Helvetica Neue, sans-serif" font-size="7" fill="#4a5c4d" letter-spacing="1" text-anchor="middle">HERZ</text>
+        </svg>
+      </div>
+
+      <div class="facts-row">
+        <div class="fact">
+          <div class="fact-number">80 %</div>
+          <div class="fact-label">der Signale<br>vom Bauch<br>zum Gehirn</div>
+        </div>
+        <div class="fact">
+          <div class="fact-number">12.</div>
+          <div class="fact-label">Hirnnerv –<br>längster im<br>Körper</div>
+        </div>
+        <div class="fact">
+          <div class="fact-number">∞</div>
+          <div class="fact-label">Einfluss auf<br>Stimmung &amp;<br>Regulation</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="footer">
+        <div class="brand">Goldgesund</div>
+        <div class="cta">Mehr erfahren ↓</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POST 2: Karussell Seite 2 -->
+<div>
+  <div class="label-box" style="margin-bottom:12px; width:540px;">
+    <p>FORMAT</p>
+    <span>Karussell Seite 2 · Wissen kompakt</span>
+  </div>
+
+  <div class="post post-2">
+    <div class="content">
+      <div class="top">
+        <div class="page-num">02 / 05</div>
+        <div class="tag">Vagus Nerv</div>
+      </div>
+
+      <div>
+        <div class="big-q">"</div>
+        <div class="question">
+          Warum wirst du<br>beim tiefen Ausatmen<br>sofort ruhiger?
+        </div>
+        <div class="answer">
+          Weil du damit direkt deinen <strong>Vagus Nerv aktivierst</strong>.
+          Er verbindet dein Gehirn mit Herz, Lunge, Magen und Darm –
+          und ist der Hauptakteur deines <strong>parasympathischen Nervensystems</strong>.
+          <br><br>
+          Tiefes Ausatmen verlängert die Herzfrequenzvariabilität.
+          Dein Körper schaltet von <strong>Alarm auf Erholung</strong> – in Sekunden.
+        </div>
+      </div>
+
+      <div>
+        <div class="gold-dot-row">
+          <div class="dot"></div>
+          <div class="dot active"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="brand">Goldgesund</div>
+        <div style="font-family: Georgia, serif; font-size: 11px; color: #C9A84C; opacity: 0.5; font-style: italic;">→ wisch weiter</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POST 3: Story / Aktivierungs-Tipps -->
+<div>
+  <div class="label-box" style="margin-bottom:12px; width:540px;">
+    <p>FORMAT</p>
+    <span>Karussell Seite 3 · Aktivierungs-Tipps</span>
+  </div>
+
+  <div class="post post-3">
+    <div class="circle-deco"></div>
+    <div class="circle-deco-2"></div>
+
+    <div class="content">
+      <div>
+        <div class="eyebrow">So trainierst du ihn</div>
+        <div class="headline">Dein Vagus,<br><em>aktiviert.</em></div>
+      </div>
+
+      <div class="tips">
+        <div class="tip">
+          <div class="tip-icon">🌬️</div>
+          <div class="tip-text">
+            <strong>Verlängertes Ausatmen</strong>
+            4 Sek. ein – 8 Sek. aus. Direkt ans parasympathische System.
+          </div>
+        </div>
+        <div class="tip">
+          <div class="tip-icon">🎵</div>
+          <div class="tip-text">
+            <strong>Summen & Singen</strong>
+            Vibrationen im Rachen stimulieren den Vagus über den Kehlkopfnerv.
+          </div>
+        </div>
+        <div class="tip">
+          <div class="tip-icon">❄️</div>
+          <div class="tip-text">
+            <strong>Kaltes Wasser ins Gesicht</strong>
+            Aktiviert den Tauchreflex – Herzrate sinkt, Vagus-Tonus steigt.
+          </div>
+        </div>
+        <div class="tip">
+          <div class="tip-icon">🤲</div>
+          <div class="tip-text">
+            <strong>Echte Verbindung</strong>
+            Ko-Regulation: Sichere soziale Momente trainieren den Vagus am nachhaltigsten.
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="brand">Goldgesund</div>
+        <div class="handle">@osteopathie_goldschmidt</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
