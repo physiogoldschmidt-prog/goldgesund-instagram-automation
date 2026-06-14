@@ -262,10 +262,10 @@ Lisa ist Heilpraktikerin (Osteopathie, Psychosomatik) in Berlin. Ihr Ton: warm, 
 Erstelle bitte einen Instagram-CAROUSEL mit 4 Bildkarten + Caption.
 
 Aufbau der 4 Karten:
-KARTE 1 – Hook: Große Aussage oder Frage die sofort neugierig macht. Soll Lust machen weiterzuswipen.
-KARTE 2 – Hintergrundwissen: Erklärung, Zusammenhang im Körper, wissenschaftliche Einordnung (alltagsnah).
-KARTE 3 – Praktischer Impuls: Was kann die Person jetzt sofort tun oder spüren? Konkret, körpernah.
-KARTE 4 – Abschluss: Ruhiger, einladender Abschluss. Kein harter Verkauf — eher: "Komm gerne vorbei" oder eine offene Frage ans Publikum.
+KARTE 1 – Das Problem: Beschreibe ein konkretes, alltagsnahes Problem das die Leserin kennt und fühlt. Soll sofort ansprechen und zum Weiterswipen animieren.
+KARTE 2 – Die Konsequenz: Was passiert wenn das Problem ignoriert wird? Körperliche, emotionale oder alltägliche Folgen — klar, ohne Panikmache, aber ehrlich.
+KARTE 3 – Die Lösung: Lisas Ansatz aus Osteopathie und Psychosomatik. Konkret, körpernah, sofort umsetzbar oder gut verständlich.
+KARTE 4 – Call to Action: Einladender Abschluss mit einer klaren Handlung — z.B. Termin buchen, Frage stellen, Übung ausprobieren, speichern. Warm, nicht aufdringlich.
 
 Für jede Karte gilt:
 - Max. 3 Zeilen, pro Zeile max. 32 Zeichen
