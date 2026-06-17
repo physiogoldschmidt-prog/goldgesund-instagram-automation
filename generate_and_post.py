@@ -58,6 +58,99 @@ WEEKDAY_THEMES = {
 }
 
 
+# ── Redaktionsplan & Reel-Pakete laden ───────────────────────────────────────
+
+def get_tagesplan() -> dict | None:
+    """Schaut im Redaktionsplan nach was heute geplant ist."""
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    today = datetime.now().strftime("%Y-%m-%d")
+    try:
+        r = requests.get(f"https://api.github.com/repos/{GITHUB_REPO}/contents/content/redaktionsplan.json",
+                         headers=headers, timeout=10)
+        r.raise_for_status()
+        plan = json.loads(base64.b64decode(r.json()["content"]).decode("utf-8"))
+        eintrag = plan.get(today)
+        if eintrag:
+            print(f"     Redaktionsplan: {today} → {eintrag['format'].upper()} — {eintrag['titel'][:50]} ✓")
+        else:
+            print(f"     Kein Eintrag im Redaktionsplan für {today} — KI generiert frei")
+        return eintrag
+    except Exception as e:
+        print(f"     Redaktionsplan konnte nicht geladen werden ({e})")
+        return None
+
+
+def get_reel_paket(nummer: int) -> dict | None:
+    """Lädt ein einzelnes Reel-Paket aus dem Repo."""
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    try:
+        r = requests.get(f"https://api.github.com/repos/{GITHUB_REPO}/contents/content/reel_pakete.json",
+                         headers=headers, timeout=10)
+        r.raise_for_status()
+        pakete = json.loads(base64.b64decode(r.json()["content"]).decode("utf-8"))
+        return pakete.get(str(nummer))
+    except Exception as e:
+        print(f"     Reel-Paket {nummer} konnte nicht geladen werden ({e})")
+        return None
+
+
+def send_reel_email(paket: dict, tagesplan: dict, date_str: str) -> None:
+    """Schickt Lisa das Reel-Script per E-Mail zum selber filmen."""
+    script_html = paket.get('script', '').replace('\n', '<br>')
+    kurz_html   = paket.get('kurzversion', '').replace('\n', '<br>')
+    caption_html = paket.get('caption', '').replace('\n', '<br>')
+    story_html  = tagesplan.get('story', '').replace('\n', '<br>')
+
+    html = f"""<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f5f1ea;font-family:Georgia,serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f1ea;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0"
+       style="background:#FAFAF7;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+  <tr><td style="background:#f5f1ea;padding:28px 40px 20px;text-align:center;border-bottom:2px solid #C8963E;">
+    <p style="margin:0;font-size:11px;color:#999;letter-spacing:2px;text-transform:uppercase;">Reel für heute</p>
+    <h1 style="margin:8px 0 0;font-size:32px;color:#C8963E;font-weight:normal;font-style:italic;">goldgesund</h1>
+    <p style="margin:4px 0 0;font-size:13px;color:#888;">{date_str}</p>
+  </td></tr>
+  <tr><td style="padding:32px 40px 0;">
+    <p style="margin:0 0 6px;font-size:11px;color:#9a8070;letter-spacing:2px;text-transform:uppercase;">Thema</p>
+    <p style="margin:0 0 24px;font-size:18px;font-weight:bold;color:#2C2C2A;">{paket.get('titel','')}</p>
+    <p style="margin:0 0 6px;font-size:11px;color:#9a8070;letter-spacing:2px;text-transform:uppercase;">Hook — erster Satz</p>
+    <div style="background:#f5f1ea;border-left:3px solid #C8963E;padding:14px 18px;margin-bottom:24px;font-size:16px;font-style:italic;color:#2C2C2A;">{paket.get('hook','')}</div>
+    <p style="margin:0 0 6px;font-size:11px;color:#9a8070;letter-spacing:2px;text-transform:uppercase;">Script (35–40 Sek.)</p>
+    <div style="background:#f5f1ea;padding:16px 18px;margin-bottom:24px;font-size:15px;line-height:1.8;color:#2C2C2A;border-radius:6px;">{script_html}</div>
+    <p style="margin:0 0 6px;font-size:11px;color:#9a8070;letter-spacing:2px;text-transform:uppercase;">Kurzversion (20 Sek.)</p>
+    <div style="background:#f5f1ea;padding:16px 18px;margin-bottom:24px;font-size:15px;line-height:1.8;color:#2C2C2A;border-radius:6px;">{kurz_html}</div>
+    <p style="margin:0 0 6px;font-size:11px;color:#9a8070;letter-spacing:2px;text-transform:uppercase;">Caption (fertig zum Kopieren)</p>
+    <div style="background:#f5f1ea;border-left:3px solid #1D9E75;padding:16px 18px;margin-bottom:24px;font-size:14px;line-height:1.8;color:#2C2C2A;">{caption_html}<br><br>{paket.get('hashtags','')}</div>
+    <p style="margin:0 0 6px;font-size:11px;color:#9a8070;letter-spacing:2px;text-transform:uppercase;">Story-Idee für heute</p>
+    <div style="background:#f5f1ea;padding:14px 18px;margin-bottom:24px;font-size:14px;color:#2C2C2A;border-radius:6px;">📱 {story_html}</div>
+    <p style="margin:0 0 6px;font-size:11px;color:#9a8070;letter-spacing:2px;text-transform:uppercase;">Produktionshinweis</p>
+    <div style="background:#f5f1ea;padding:14px 18px;margin-bottom:32px;font-size:13px;color:#7a6a5a;border-radius:6px;font-style:italic;">🎬 {paket.get('produktionshinweis','')}</div>
+  </td></tr>
+  <tr><td style="padding:16px 40px 24px;text-align:center;border-top:1px solid #e8ddd0;">
+    <p style="margin:0;font-size:12px;color:#bbb;">GOLDGESUND · Lisa Goldschmidt · Heilpraktikerin Berlin</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>"""
+
+    payload = {
+        "sender": {"name": "GOLDGESUND", "email": "physiogoldschmidt@gmail.com"},
+        "to": [{"email": PREVIEW_EMAIL, "name": "Lisa"}],
+        "subject": f"🎬 Reel für heute {date_str} — {paket.get('titel','')[:40]}",
+        "htmlContent": html,
+    }
+    r = requests.post("https://api.brevo.com/v3/smtp/email",
+                      headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+                      json=payload, timeout=20)
+    r.raise_for_status()
+    print(f"  Reel-Script E-Mail gesendet ✓")
+
+
 # ── Aktuelles Fokusthema laden ───────────────────────────────────────────────
 
 def get_current_theme() -> str:
@@ -198,7 +291,7 @@ def extract_briefing_highlights(briefing: str) -> str:
 
 # ── Content-Generierung via Claude ───────────────────────────────────────────
 
-def generate_content() -> tuple[list[str], str]:
+def generate_content(tagesplan: dict | None = None) -> tuple[list[str], str]:
     """Gibt (liste mit Bild-Texten, caption) zurück.
     Carousel-Tage (Mo/Mi/Fr): 4 Karten.
     Einzelbild-Tage (Di/Do/Sa/So): 1 Karte.
@@ -208,16 +301,22 @@ def generate_content() -> tuple[list[str], str]:
     weekday     = datetime.now().weekday()
     week_number = datetime.now().isocalendar()[1]
     theme       = CUSTOM_THEME if CUSTOM_THEME else WEEKDAY_THEMES[weekday]
-    # Post-Typ: manuelle Vorgabe hat Vorrang, sonst Wochentag-Regel
-    if CUSTOM_POST_TYPE in ("carousel", "single"):
+    # Post-Typ: Tagesplan → manuelle Vorgabe → Wochentag-Regel
+    if tagesplan and tagesplan.get("format") in ("carousel", "zitat"):
+        is_carousel = (tagesplan["format"] == "carousel")
+    elif CUSTOM_POST_TYPE in ("carousel", "single"):
         is_carousel = (CUSTOM_POST_TYPE == "carousel")
     else:
         is_carousel = weekday in CAROUSEL_DAYS
 
-    # Aktuelles Fokusthema laden (überschreibt Wochentag-Thema wenn aktiv)
-    fokusthema = get_current_theme()
-    if fokusthema:
-        theme = fokusthema
+    # Tagesplan hat höchste Priorität — dann Fokusthema — dann Wochentag-Thema
+    if tagesplan and tagesplan.get("titel"):
+        theme = tagesplan["titel"]
+        print(f"     Thema aus Redaktionsplan: {theme[:60]}")
+    else:
+        fokusthema = get_current_theme()
+        if fokusthema:
+            theme = fokusthema
 
     # Aktuelles Briefing laden
     briefing_raw        = get_latest_briefing()
@@ -797,13 +896,7 @@ def main():
     date_str    = datetime.now().strftime("%Y-%m-%d")
     weekday     = datetime.now().weekday()
     week_number = datetime.now().isocalendar()[1]
-    if CUSTOM_POST_TYPE in ("carousel", "single"):
-        is_carousel = (CUSTOM_POST_TYPE == "carousel")
-    else:
-        is_carousel = weekday in CAROUSEL_DAYS
-    post_type   = "carousel" if is_carousel else "single"
     day_names   = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
-    print(f"GOLDGESUND Instagram — {date_str} ({day_names[weekday]}, {post_type.upper()})")
 
     # Montags: Briefing per E-Mail verschicken
     if weekday == 0:
@@ -814,15 +907,46 @@ def main():
         else:
             print("     Kein Briefing gefunden — E-Mail übersprungen")
 
+    # Redaktionsplan prüfen
+    tagesplan = get_tagesplan()
+
+    # ── REEL-TAG: Script per E-Mail schicken, kein Bild generieren ──
+    if tagesplan and tagesplan.get("format") == "reel":
+        paket_nr = tagesplan.get("paket")
+        print(f"GOLDGESUND Instagram — {date_str} ({day_names[weekday]}, REEL)")
+        print(f"1/1  Reel-Script wird verschickt (Paket {paket_nr}) …")
+        if paket_nr:
+            paket = get_reel_paket(paket_nr)
+            if paket:
+                send_reel_email(paket, tagesplan, date_str)
+                print("✓ Fertig! Reel-Script E-Mail gesendet — Lisa filmt selbst.")
+                return
+        # Fallback wenn kein Paket
+        print("     Kein Paket gefunden — wechsle zu KI-generiertem Post")
+
+    # ── POST-TYP bestimmen ──
+    if tagesplan and tagesplan.get("format") in ("carousel", "zitat"):
+        plan_format = tagesplan["format"]
+        is_carousel = (plan_format == "carousel")
+        post_type   = "carousel" if is_carousel else "single"
+    elif CUSTOM_POST_TYPE in ("carousel", "single"):
+        is_carousel = (CUSTOM_POST_TYPE == "carousel")
+        post_type   = CUSTOM_POST_TYPE
+    else:
+        is_carousel = weekday in CAROUSEL_DAYS
+        post_type   = "carousel" if is_carousel else "single"
+
+    print(f"GOLDGESUND Instagram — {date_str} ({day_names[weekday]}, {post_type.upper()})")
+
     print(f"1/4  Content wird generiert ({post_type}, inkl. Briefing-Recherche) …")
-    slides_text, caption = generate_content()
+    slides_text, caption = generate_content(tagesplan=tagesplan)
     for i, t in enumerate(slides_text, 1):
         print(f"     Karte {i}: {t!r}")
     print(f"     Caption-Vorschau: {caption[:80]}…")
 
     print("2/4  Hintergrund laden + Karten erstellen …")
     day_of_year = datetime.now().timetuple().tm_yday
-    use_clean   = (day_of_year % 2 == 1)   # täglich abwechselnd
+    use_clean   = (day_of_year % 2 == 1)
     palette = get_palette()
     if use_clean:
         bg_color = palette["bg"]
