@@ -682,10 +682,13 @@ def send_preview_email(image_urls: list[str], caption: str,
 
     # Bestätigungsseite (GitHub Pages) statt direkter Make.com-Link
     # → verhindert automatisches Posten durch E-Mail-Scanner
+    import time as _time
     params = {
         "post_type": post_type,
         "caption":   caption,
         "wh":        MAKE_APPROVAL_WEBHOOK,
+        "ts":        int(_time.time()),   # Ablaufschutz: Link gültig 26h
+        "date":      date_str,            # Doppel-Post-Schutz
     }
     for i, url in enumerate(image_urls, start=1):
         params[f"image_url_{i}"] = url

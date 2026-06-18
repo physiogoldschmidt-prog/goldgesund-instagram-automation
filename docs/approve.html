@@ -144,6 +144,27 @@
   const postType = p.get('post_type') || 'single';
   const caption  = p.get('caption')   || '';
   const wh       = p.get('wh')        || '';
+  const ts       = parseInt(p.get('ts') || '0');
+  const postDate = p.get('date') || '';
+
+  // ── Ablaufprüfung: Link älter als 26 Stunden → abgelaufen ──
+  const now = Date.now();
+  const ageHours = (now - ts * 1000) / 3600000;
+  if (ts > 0 && ageHours > 26) {
+    document.getElementById('post-btn').style.display = 'none';
+    document.getElementById('status').className = 'status err';
+    document.getElementById('status').textContent = '⏰ Dieser Freigabe-Link ist abgelaufen (älter als 26 Stunden). Wenn du heute noch posten möchtest, starte einen neuen Durchlauf.';
+    document.querySelector('.discard').style.display = 'none';
+  }
+
+  // ── Doppel-Post-Schutz: schon geklickt? ──
+  const approvedKey = 'approved_' + (postDate || ts);
+  if (localStorage.getItem(approvedKey)) {
+    document.getElementById('post-btn').disabled = true;
+    document.getElementById('post-btn').textContent = '✅ Bereits freigegeben';
+    document.getElementById('status').className = 'status ok';
+    document.getElementById('status').textContent = 'Du hast diesen Post bereits freigegeben.';
+  }
 
   // Bilder einbauen
   const imagesEl = document.getElementById('images');
@@ -196,6 +217,8 @@
 
     fetch(makeUrl, { method: 'GET', mode: 'no-cors' })
       .then(() => {
+        // Freigabe merken — verhindert Doppel-Post
+        localStorage.setItem(approvedKey, '1');
         btn.textContent = '✅  Gepostet!';
         status.className = 'status ok';
         status.textContent = 'Der Post wird gleich auf Instagram veröffentlicht.';
