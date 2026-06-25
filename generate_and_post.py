@@ -941,8 +941,17 @@ def main():
 
     print(f"GOLDGESUND Instagram — {date_str} ({day_names[weekday]}, {post_type.upper()})")
 
-    print(f"1/4  Content wird generiert ({post_type}, inkl. Briefing-Recherche) …")
-    slides_text, caption = generate_content(tagesplan=tagesplan)
+    # Fertiger Content? Direkt verwenden, KI überspringen
+    if tagesplan and tagesplan.get("fertig") and tagesplan.get("slides") and tagesplan.get("caption"):
+        print(f"1/4  Fertiger Content aus Redaktionsplan wird verwendet …")
+        slides_text = tagesplan["slides"]
+        caption     = tagesplan["caption"]
+        for i, t in enumerate(slides_text, 1):
+            print(f"     Karte {i}: {t[:40]!r}")
+        print(f"     Caption: {caption[:60]}…")
+    else:
+        print(f"1/4  Content wird generiert ({post_type}, inkl. Briefing-Recherche) …")
+        slides_text, caption = generate_content(tagesplan=tagesplan)
     for i, t in enumerate(slides_text, 1):
         print(f"     Karte {i}: {t!r}")
     print(f"     Caption-Vorschau: {caption[:80]}…")
