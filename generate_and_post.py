@@ -931,13 +931,13 @@ def main():
     if tagesplan and tagesplan.get("format") in ("carousel", "zitat"):
         plan_format = tagesplan["format"]
         is_carousel = (plan_format == "carousel")
-        post_type   = "carousel" if is_carousel else "single"
+        post_type   = "Karussell" if is_carousel else "Bild"
     elif CUSTOM_POST_TYPE in ("carousel", "single"):
         is_carousel = (CUSTOM_POST_TYPE == "carousel")
         post_type   = CUSTOM_POST_TYPE
     else:
         is_carousel = weekday in CAROUSEL_DAYS
-        post_type   = "carousel" if is_carousel else "single"
+        post_type   = "Karussell" if is_carousel else "Bild"
 
     print(f"GOLDGESUND Instagram — {date_str} ({day_names[weekday]}, {post_type.upper()})")
 

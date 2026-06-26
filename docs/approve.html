@@ -183,17 +183,18 @@
   if (imgCount === 1) imagesEl.style.gridTemplateColumns = '1fr';
 
   // Typ-Label
+  const isCarousel = (postType === 'Karussell');
   document.getElementById('post-tag').textContent =
-    postType === 'carousel' ? 'Carousel · ' + imgCount + ' Karten' : 'Einzelbild';
+    isCarousel ? 'Carousel · ' + imgCount + ' Karten' : 'Einzelbild';
   document.getElementById('img-label').textContent =
-    postType === 'carousel' ? 'Bildkarten' : 'Bildkarte';
+    isCarousel ? 'Bildkarten' : 'Bildkarte';
 
   // Caption
   document.getElementById('caption').textContent = decodeURIComponent(caption);
 
   // Button-Text
   document.getElementById('post-btn').textContent =
-    (postType === 'carousel' ? '✅  Als Carousel auf Instagram veröffentlichen' : '✅  Jetzt auf Instagram veröffentlichen');
+    (isCarousel ? '✅  Als Carousel auf Instagram veröffentlichen' : '✅  Jetzt auf Instagram veröffentlichen');
 
   // Wirklich posten — erst nach echtem Klick
   function doPost() {
