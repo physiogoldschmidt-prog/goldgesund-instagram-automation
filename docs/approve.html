@@ -158,7 +158,7 @@
   }
 
   // ── Doppel-Post-Schutz: schon geklickt? ──
-  const approvedKey = 'approved_' + (postDate || ts);
+  const approvedKey = 'approved_' + (ts || postDate);
   if (localStorage.getItem(approvedKey)) {
     document.getElementById('post-btn').disabled = true;
     document.getElementById('post-btn').textContent = '✅ Bereits freigegeben';
