@@ -207,7 +207,8 @@
 
     // Parameter für Make.com zusammenbauen
     const makeParams = new URLSearchParams();
-    makeParams.set('post_type', postType);
+    const makePostType = (postType === 'carousel' || postType === 'Karussell') ? 'Karussell' : 'Bild';
+    makeParams.set('post_type', makePostType);
     makeParams.set('caption', caption);
     for (let i = 1; i <= 4; i++) {
       const url = p.get('image_url_' + i);

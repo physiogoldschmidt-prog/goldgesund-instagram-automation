@@ -932,9 +932,9 @@ def main():
         plan_format = tagesplan["format"]
         is_carousel = (plan_format == "carousel")
         post_type   = "Karussell" if is_carousel else "Bild"
-    elif CUSTOM_POST_TYPE in ("carousel", "single"):
-        is_carousel = (CUSTOM_POST_TYPE == "carousel")
-        post_type   = CUSTOM_POST_TYPE
+    elif CUSTOM_POST_TYPE in ("carousel", "single", "Karussell", "Bild"):
+        is_carousel = CUSTOM_POST_TYPE in ("carousel", "Karussell")
+        post_type   = "Karussell" if is_carousel else "Bild"
     else:
         is_carousel = weekday in CAROUSEL_DAYS
         post_type   = "Karussell" if is_carousel else "Bild"
