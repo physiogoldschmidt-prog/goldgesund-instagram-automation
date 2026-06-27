@@ -701,6 +701,25 @@ def send_preview_email(image_urls: list[str], caption: str,
     # Caption-Zeilenumbrüche für HTML
     caption_html = caption.replace("\n", "<br>")
 
+    # Button-Bereich vorbereiten (vor dem großen f-string, um Syntaxprobleme zu vermeiden)
+    if post_type == "Karussell":
+        button_html = "".join(
+            f'<a href="{url}" download style="display:inline-block;background:#C8963E;'
+            f'color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;'
+            f'padding:12px 24px;border-radius:4px;margin:4px;letter-spacing:0.5px;">'
+            f'&#11015;&#65039; Karte {i} herunterladen</a>'
+            for i, url in enumerate(image_urls, 1)
+        )
+        button_hint = "&#128241; Bilder speichern → Instagram öffnen → + → Mehrere Bilder wählen → Caption einfügen"
+    else:
+        button_html = (
+            f'<a href="{approval_url}" style="display:inline-block;background:#1D9E75;'
+            f'color:#ffffff;text-decoration:none;font-size:17px;font-weight:bold;'
+            f'padding:16px 48px;border-radius:4px;letter-spacing:0.5px;">'
+            f'&#9989; &nbsp; Jetzt auf Instagram ver&ouml;ffentlichen</a>'
+        )
+        button_hint = "Wenn du nichts tust, wird heute kein Post ver&ouml;ffentlicht."
+
     # Karten-Vorschau: nebeneinander (2 × 2)
     def slide_cell(url: str, num: int) -> str:
         return f"""
@@ -773,23 +792,8 @@ def send_preview_email(image_urls: list[str], caption: str,
         <!-- Button / Download -->
         <tr>
           <td style="padding:36px 40px;text-align:center;">
-            {"".join(f'''<a href="{url}" download
-               style="display:inline-block;background:#C8963E;color:#ffffff;
-                      text-decoration:none;font-size:15px;font-weight:bold;
-                      padding:12px 24px;border-radius:4px;margin:4px;
-                      letter-spacing:0.5px;">
-              ⬇️ Karte {i} herunterladen
-            </a>''' for i, url in enumerate(image_urls, 1)) if post_type == "Karussell" else f"""
-            <a href="{approval_url}"
-               style="display:inline-block;background:#1D9E75;color:#ffffff;
-                      text-decoration:none;font-size:17px;font-weight:bold;
-                      padding:16px 48px;border-radius:4px;
-                      letter-spacing:0.5px;">
-              ✅ &nbsp; Jetzt auf Instagram veröffentlichen
-            </a>"""}
-            <p style="margin:16px 0 0;font-size:13px;color:#aaa;">
-              {"📱 Bilder speichern → Instagram öffnen → + → Mehrere Bilder wählen → Caption einfügen" if post_type == "Karussell" else "Wenn du nichts tust, wird heute kein Post veröffentlicht."}
-            </p>
+            {button_html}
+            <p style="margin:16px 0 0;font-size:13px;color:#aaa;">{button_hint}</p>
           </td>
         </tr>
 
