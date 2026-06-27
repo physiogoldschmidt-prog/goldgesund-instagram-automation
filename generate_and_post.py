@@ -770,18 +770,25 @@ def send_preview_email(image_urls: list[str], caption: str,
           </td>
         </tr>
 
-        <!-- Button -->
+        <!-- Button / Download -->
         <tr>
           <td style="padding:36px 40px;text-align:center;">
+            {"".join(f'''<a href="{url}" download
+               style="display:inline-block;background:#C8963E;color:#ffffff;
+                      text-decoration:none;font-size:15px;font-weight:bold;
+                      padding:12px 24px;border-radius:4px;margin:4px;
+                      letter-spacing:0.5px;">
+              ⬇️ Karte {i} herunterladen
+            </a>''' for i, url in enumerate(image_urls, 1)) if post_type == "Karussell" else f"""
             <a href="{approval_url}"
                style="display:inline-block;background:#1D9E75;color:#ffffff;
                       text-decoration:none;font-size:17px;font-weight:bold;
                       padding:16px 48px;border-radius:4px;
                       letter-spacing:0.5px;">
-              ✅ &nbsp; {"Jetzt als Carousel auf Instagram veröffentlichen" if post_type == "carousel" else "Jetzt auf Instagram veröffentlichen"}
-            </a>
+              ✅ &nbsp; Jetzt auf Instagram veröffentlichen
+            </a>"""}
             <p style="margin:16px 0 0;font-size:13px;color:#aaa;">
-              Wenn du nichts tust, wird heute kein Post veröffentlicht.
+              {"📱 Bilder speichern → Instagram öffnen → + → Mehrere Bilder wählen → Caption einfügen" if post_type == "Karussell" else "Wenn du nichts tust, wird heute kein Post veröffentlicht."}
             </p>
           </td>
         </tr>
