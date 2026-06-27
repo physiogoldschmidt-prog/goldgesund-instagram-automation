@@ -701,24 +701,18 @@ def send_preview_email(image_urls: list[str], caption: str,
     # Caption-Zeilenumbrüche für HTML
     caption_html = caption.replace("\n", "<br>")
 
-    # Button-Bereich vorbereiten (vor dem großen f-string, um Syntaxprobleme zu vermeiden)
+    # Button-Bereich vorbereiten (Download-Buttons für alle Post-Typen)
+    button_html = "".join(
+        f'<a href="{url}" download style="display:inline-block;background:#C8963E;'
+        f'color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;'
+        f'padding:12px 24px;border-radius:4px;margin:4px;letter-spacing:0.5px;">'
+        f'&#11015;&#65039; {"Karte " + str(i) + " herunterladen" if len(image_urls) > 1 else "Bild herunterladen"}</a>'
+        for i, url in enumerate(image_urls, 1)
+    )
     if post_type == "Karussell":
-        button_html = "".join(
-            f'<a href="{url}" download style="display:inline-block;background:#C8963E;'
-            f'color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;'
-            f'padding:12px 24px;border-radius:4px;margin:4px;letter-spacing:0.5px;">'
-            f'&#11015;&#65039; Karte {i} herunterladen</a>'
-            for i, url in enumerate(image_urls, 1)
-        )
-        button_hint = "&#128241; Bilder speichern → Instagram öffnen → + → Mehrere Bilder wählen → Caption einfügen"
+        button_hint = "&#128241; Alle 4 Karten speichern → Instagram → + → Mehrere Bilder → Caption einkopieren → Fertig!"
     else:
-        button_html = (
-            f'<a href="{approval_url}" style="display:inline-block;background:#1D9E75;'
-            f'color:#ffffff;text-decoration:none;font-size:17px;font-weight:bold;'
-            f'padding:16px 48px;border-radius:4px;letter-spacing:0.5px;">'
-            f'&#9989; &nbsp; Jetzt auf Instagram ver&ouml;ffentlichen</a>'
-        )
-        button_hint = "Wenn du nichts tust, wird heute kein Post ver&ouml;ffentlicht."
+        button_hint = "&#128241; Bild speichern → Instagram → + → Caption einkopieren → Fertig!"
 
     # Karten-Vorschau: nebeneinander (2 × 2)
     def slide_cell(url: str, num: int) -> str:
