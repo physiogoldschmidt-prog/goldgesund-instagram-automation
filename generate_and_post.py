@@ -46,16 +46,59 @@ WEEKDAY_PHOTO_SEARCH = {
     6: "peaceful forest stillness",
 }
 
-# Themen je Wochentag (Montag=0 … Sonntag=6)
-WEEKDAY_THEMES = {
-    0: "Stressregulation und Nervensystem — wie der Körper Stress speichert und loslässt",
-    1: "Osteopathie-Wissen — Zusammenhänge im Körper die die meisten nicht kennen",
-    2: "Vagusnerv und innere Ruhe — praktische Einblicke",
-    3: "Psychosomatik — wenn der Körper spricht was der Kopf nicht sagt",
-    4: "Selbstfürsorge und Körperbewusstsein — konkrete kleine Schritte",
-    5: "Inspiration und Zitat — Weisheit aus der Arbeit mit dem Körper",
-    6: "Innehalten und Reflexion — Raum für Tiefe",
-}
+# Großer Themenpool — rotiert täglich durch alle Themen (nie dasselbe zweimal in 4 Wochen)
+THEMEN_POOL = [
+    "Vagusnerv aktivieren — einfache Methoden die wirklich funktionieren",
+    "Wenn der Körper Nein sagt — Erschöpfung als Signal verstehen",
+    "Osteopathie und das Bindegewebe — warum Faszien so wichtig sind",
+    "Atemübungen aus der Praxis — sofort anwendbar, sofort spürbar",
+    "Psychosomatik: Wenn Schmerz keine rein körperliche Ursache hat",
+    "Schlaf und Nervensystem — was in der Nacht wirklich passiert",
+    "Die Polyvagal-Theorie einfach erklärt — dein inneres Sicherheitssystem",
+    "Chronischer Stress im Körper — was er mit Muskeln und Gelenken macht",
+    "Selbstregulation lernen — kleine Momente die viel verändern",
+    "Osteopathie bei Kopfschmerzen — Zusammenhänge die überraschen",
+    "Trauma im Körper — sanfte Wege zur Verarbeitung",
+    "Das Nervensystem nach der Geburt — was Mütter wissen sollten",
+    "Intuition und Körpergefühl — wie du deinem Bauch besser zuhörst",
+    "Bewegung als Medizin — was Wissenschaft und Osteopathie gemeinsam sagen",
+    "Grenzen spüren, Grenzen setzen — ein körperlicher Prozess",
+    "Verdauung und Emotionen — der Bauch als zweites Gehirn",
+    "Osteopathie für Kinder — wenn kleine Körper große Hilfe brauchen",
+    "Wintermüdigkeit und Lichtmangel — was du wirklich tun kannst",
+    "Schulterspannung und innere Last — der Zusammenhang",
+    "Entspannung ist keine Schwäche — warum Pausen Leistung steigern",
+    "Hormone und Nervensystem — warum Zyklus und Stress sich beeinflussen",
+    "Osteopathie bei Rückenschmerzen — über Symptome hinausdenken",
+    "Verbindung als Heilmittel — warum echte Begegnung das Nervensystem beruhigt",
+    "Kieferspannung und Stress — ein unterschätzter Zusammenhang",
+    "Innere Stille finden — Stille als aktiver Zustand, nicht Abwesenheit",
+    "Resilienz aufbauen — nicht härter werden, sondern flexibler",
+    "Das Parasympathikum stärken — konkrete Übungen für den Alltag",
+    "Osteopathie und Schwangerschaft — was der Körper in dieser Zeit braucht",
+]
+
+# 6 verschiedene Caption-Stile — rotieren täglich für Abwechslung
+CAPTION_STILE = [
+    "Schreibe aus Lisas persönlicher Praxis-Erfahrung — beginne mit einer konkreten Beobachtung aus dem Behandlungsraum, erzähle dann was dahintersteckt, und schließe mit einem Impuls für den Alltag ab.",
+    "Schreibe wissenschaftlich fundiert aber alltagsnah — beginne mit einer überraschenden Tatsache oder Forschungserkennntnis, erkläre sie verständlich, und verbinde sie mit dem gelebten Alltag der Leserin.",
+    "Schreibe in der Du-Form direkt zur Leserin — beginne mit einer Frage die sie innerlich bejaht, führe sie durch eine kurze Erkenntnis, und lade sie am Ende ein innezuhalten oder etwas auszuprobieren.",
+    "Schreibe als sanfte Einladung zur Selbstwahrnehmung — beginne mit einem ruhigen Bild oder einer Metapher aus der Natur, verbinde es mit dem Thema, und ende mit einem stillen Impuls.",
+    "Schreibe ehrlich und nahbar — beginne mit einem Widerspruch oder Missverständnis das viele haben, löse ihn auf, und gib eine klare neue Perspektive aus Lisas Arbeit.",
+    "Schreibe inspirierend und klar — beginne mit einer kurzen, kraftvollen Aussage die zum Nachdenken bringt, vertiefe sie mit Lisas fachlichem Blick, und schließe mit einem konkreten kleinen Schritt.",
+]
+
+def get_daily_theme() -> str:
+    """Wählt täglich ein anderes Thema aus dem Pool — rotiert durch alle 28 Themen."""
+    day_of_year = datetime.now().timetuple().tm_yday
+    year = datetime.now().year
+    idx = (day_of_year + year * 365) % len(THEMEN_POOL)
+    return THEMEN_POOL[idx]
+
+def get_daily_caption_style() -> str:
+    """Wählt täglich einen anderen Caption-Stil."""
+    day_of_year = datetime.now().timetuple().tm_yday
+    return CAPTION_STILE[day_of_year % len(CAPTION_STILE)]
 
 
 # ── Redaktionsplan & Reel-Pakete laden ───────────────────────────────────────
@@ -300,7 +343,7 @@ def generate_content(tagesplan: dict | None = None) -> tuple[list[str], str]:
 
     weekday     = datetime.now().weekday()
     week_number = datetime.now().isocalendar()[1]
-    theme       = CUSTOM_THEME if CUSTOM_THEME else WEEKDAY_THEMES[weekday]
+
     # Post-Typ: Tagesplan → manuelle Vorgabe → Wochentag-Regel
     if tagesplan and tagesplan.get("format") in ("carousel", "zitat"):
         is_carousel = (tagesplan["format"] == "carousel")
@@ -309,7 +352,8 @@ def generate_content(tagesplan: dict | None = None) -> tuple[list[str], str]:
     else:
         is_carousel = weekday in CAROUSEL_DAYS
 
-    # Tagesplan hat höchste Priorität — dann Fokusthema — dann Wochentag-Thema
+    # Thema: Tagesplan → Fokusthema → rotierender Tagespool
+    fokusthema = ""
     if tagesplan and tagesplan.get("titel"):
         theme = tagesplan["titel"]
         print(f"     Thema aus Redaktionsplan: {theme[:60]}")
@@ -317,6 +361,12 @@ def generate_content(tagesplan: dict | None = None) -> tuple[list[str], str]:
         fokusthema = get_current_theme()
         if fokusthema:
             theme = fokusthema
+        else:
+            theme = CUSTOM_THEME if CUSTOM_THEME else get_daily_theme()
+            print(f"     Tagesthema: {theme[:60]}")
+
+    # Caption-Stil des Tages
+    caption_stil = get_daily_caption_style()
 
     # Aktuelles Briefing laden
     briefing_raw        = get_latest_briefing()
@@ -330,13 +380,13 @@ Aktuelle Forschungserkenntnisse aus dem wöchentlichen Briefing:
 Beziehe diese Erkenntnisse passend in den Content ein — als Inspiration, konkretes Beispiel oder aktuellen Bezug. Zitiere keine Studie namentlich, sondern integriere das Wissen natürlich.
 """
 
-    # Letzte Hooks laden — Wiederholungen vermeiden
-    recent_hooks = get_recent_hooks(7)
+    # Letzte Hooks laden — Wiederholungen vermeiden (14 Tage)
+    recent_hooks = get_recent_hooks(14)
     hooks_section = ""
     if recent_hooks:
         hooks_section = f"""
 
-WICHTIG — Diese Hooks wurden in den letzten 7 Tagen bereits verwendet. Bitte NICHT wiederholen oder ähnlich formulieren:
+WICHTIG — Diese Hooks wurden in den letzten 14 Tagen bereits verwendet. Bitte NICHT wiederholen oder ähnlich formulieren:
 {recent_hooks}
 
 Wähle eine komplett andere Perspektive, Formulierung und Einstieg.
@@ -347,13 +397,15 @@ Wähle eine komplett andere Perspektive, Formulierung und Einstieg.
         f"Tag {(datetime.now().date() - __import__('datetime').date(2026, 6, 10)).days + 1} des Themas — "
         f"wähle heute einen spezifischen, noch nicht genutzten Teilaspekt dieses Themas."
         if fokusthema else
-        f"Wochentag-Thema: {theme}\nWochennummer {week_number} — wähle einen frischen, spezifischen Aspekt dieses Themas."
+        f"Heutiges Thema: {theme}\nWähle einen konkreten, frischen Aspekt — nicht zu allgemein, sondern eine spezifische Beobachtung oder Erkenntnis dazu."
     )
 
     base_intro = f"""Du bist Lisa Goldschmidts Content-Assistentin für ihren Instagram-Account GOLDGESUND.
 Lisa ist Heilpraktikerin (Osteopathie, Psychosomatik) in Berlin. Ihr Ton: warm, ruhig, klar, wissenschaftlich fundiert aber alltagsnah — keine Heilungsversprechen, keine lauten Claims.
 
-{thema_zeile}{briefing_section}{hooks_section}"""
+{thema_zeile}
+
+Caption-Stil für heute: {caption_stil}{briefing_section}{hooks_section}"""
 
     if is_carousel:
         prompt = base_intro + """
